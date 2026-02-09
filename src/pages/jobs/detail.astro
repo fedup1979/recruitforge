@@ -166,6 +166,48 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     (document.getElementById('apply-link') as HTMLAnchorElement).href = `/apply?job=${job.id}`;
 
     document.getElementById('job-content')!.classList.remove('hidden');
+
+    // Inject Schema.org JobPosting JSON-LD
+    const countryNames: Record<string, string> = {
+      MG: 'Madagascar', MA: 'Morocco', SN: 'Senegal', CI: 'Ivory Coast',
+      CM: 'Cameroon', TN: 'Tunisia', CD: 'Congo', FR: 'France',
+      TG: 'Togo', BF: 'Burkina Faso', NE: 'Niger',
+    };
+    const schema = {
+      '@context': 'https://schema.org/',
+      '@type': 'JobPosting',
+      title: job.title,
+      description: job.description || '',
+      datePosted: job.created_at?.split('T')[0],
+      employmentType: job.contract_type === 'CDI' ? 'FULL_TIME' : job.contract_type === 'CDD' ? 'CONTRACTOR' : 'OTHER',
+      jobLocationType: job.location?.toLowerCase().includes('remote') || job.location?.toLowerCase().includes('télétravail') ? 'TELECOMMUTE' : undefined,
+      jobLocation: {
+        '@type': 'Place',
+        address: {
+          '@type': 'PostalAddress',
+          addressCountry: job.country,
+          addressLocality: countryNames[job.country] || job.country,
+        },
+      },
+      baseSalary: job.salary_amount ? {
+        '@type': 'MonetaryAmount',
+        currency: job.salary_currency || 'EUR',
+        value: {
+          '@type': 'QuantitativeValue',
+          value: job.salary_amount,
+          unitText: 'MONTH',
+        },
+      } : undefined,
+      hiringOrganization: {
+        '@type': 'Organization',
+        name: 'AMBITIA',
+        sameAs: 'https://ambitia.io',
+      },
+    };
+    const ldScript = document.createElement('script');
+    ldScript.type = 'application/ld+json';
+    ldScript.textContent = JSON.stringify(schema);
+    document.head.appendChild(ldScript);
   }
 
   init();

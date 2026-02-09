@@ -15,7 +15,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-type EmailTemplate = 'welcome' | 'application_received' | 'test_reminder' | 'status_change' | 'roleplay_invitation';
+type EmailTemplate = 'welcome' | 'application_received' | 'test_reminder' | 'status_change'
+  | 'roleplay_invitation' | 'status_hired' | 'status_rejected' | 'status_pool'
+  | 'status_interview' | 'status_review';
 
 interface EmailRequest {
   template: EmailTemplate;
@@ -25,39 +27,50 @@ interface EmailRequest {
 
 function getEmailContent(template: EmailTemplate, data: Record<string, string> = {}): { subject: string; html: string } {
   const header = `
-    <div style="background-color: #2D5BFF; padding: 24px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-family: Inter, sans-serif; font-size: 24px;">AMBITIA</h1>
+    <div style="background: linear-gradient(135deg, #2D5BFF 0%, #6C5CE7 100%); padding: 32px 24px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-family: Inter, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">AMBITIA</h1>
+      <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-family: Inter, sans-serif; font-size: 13px;">Recrutement international</p>
     </div>
   `;
 
   const footer = `
-    <div style="padding: 24px; text-align: center; color: #666; font-size: 12px; font-family: Inter, sans-serif;">
-      <p>&copy; ${new Date().getFullYear()} AMBITIA — Recrutement international</p>
-      <p><a href="${SITE_URL}/privacy" style="color: #2D5BFF;">Politique de confidentialité</a></p>
+    <div style="padding: 24px; text-align: center; color: #999; font-size: 12px; font-family: Inter, sans-serif; border-top: 1px solid #eee;">
+      <p style="margin: 0 0 8px;">&copy; ${new Date().getFullYear()} AMBITIA — Recrutement international</p>
+      <p style="margin: 0;">
+        <a href="${SITE_URL}/privacy" style="color: #2D5BFF; text-decoration: none;">Confidentialité</a>
+        &nbsp;·&nbsp;
+        <a href="${SITE_URL}/terms" style="color: #2D5BFF; text-decoration: none;">CGU</a>
+      </p>
+    </div>
+  `;
+
+  const btn = (text: string, url: string) => `
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${url}" style="background: linear-gradient(135deg, #2D5BFF 0%, #6C5CE7 100%); color: white; padding: 14px 36px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">${text}</a>
     </div>
   `;
 
   const wrap = (body: string) => `
-    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; font-family: Inter, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; font-family: Inter, -apple-system, sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
       ${header}
-      <div style="padding: 32px 24px;">
+      <div style="padding: 32px 28px;">
         ${body}
       </div>
       ${footer}
     </div>
   `;
 
+  const p = (text: string) => `<p style="color: #444; line-height: 1.7; margin: 0 0 16px; font-size: 15px;">${text}</p>`;
+
   switch (template) {
     case 'welcome':
       return {
         subject: 'Bienvenue sur AMBITIA !',
         html: wrap(`
-          <h2 style="color: #1A1D29;">Bienvenue, ${data.name || 'Candidat'} !</h2>
-          <p style="color: #444; line-height: 1.6;">Merci de vous être inscrit(e) sur AMBITIA. Nous sommes ravis de vous accompagner dans votre recherche d'emploi.</p>
-          <p style="color: #444; line-height: 1.6;">Commencez par consulter nos offres de postes disponibles :</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${SITE_URL}/jobs" style="background-color: #2D5BFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Voir les postes</a>
-          </div>
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Bienvenue, ${data.name || 'Candidat'} !</h2>
+          ${p('Merci de vous être inscrit(e) sur AMBITIA. Nous sommes ravis de vous accompagner dans votre recherche d\'emploi.')}
+          ${p('Commencez par consulter nos offres de postes disponibles :')}
+          ${btn('Voir les postes', `${SITE_URL}/jobs`)}
         `),
       };
 
@@ -65,13 +78,11 @@ function getEmailContent(template: EmailTemplate, data: Record<string, string> =
       return {
         subject: 'Candidature reçue — AMBITIA',
         html: wrap(`
-          <h2 style="color: #1A1D29;">Candidature reçue !</h2>
-          <p style="color: #444; line-height: 1.6;">Bonjour ${data.name || 'Candidat'},</p>
-          <p style="color: #444; line-height: 1.6;">Nous avons bien reçu votre candidature pour le poste de <strong>${data.jobTitle || 'poste'}</strong>.</p>
-          <p style="color: #444; line-height: 1.6;">Prochaine étape : passez les tests en ligne pour compléter votre candidature.</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${SITE_URL}/dashboard" style="background-color: #2D5BFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Mon tableau de bord</a>
-          </div>
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Candidature reçue !</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous avons bien reçu votre candidature pour le poste de <strong>${data.jobTitle || 'poste'}</strong>.`)}
+          ${p('Prochaine étape : passez les tests en ligne pour compléter votre candidature.')}
+          ${btn('Passer les tests', `${SITE_URL}/dashboard`)}
         `),
       };
 
@@ -79,26 +90,85 @@ function getEmailContent(template: EmailTemplate, data: Record<string, string> =
       return {
         subject: 'Rappel : complétez vos tests — AMBITIA',
         html: wrap(`
-          <h2 style="color: #1A1D29;">N'oubliez pas vos tests !</h2>
-          <p style="color: #444; line-height: 1.6;">Bonjour ${data.name || 'Candidat'},</p>
-          <p style="color: #444; line-height: 1.6;">Il vous reste des tests à compléter pour votre candidature au poste de <strong>${data.jobTitle || 'poste'}</strong>.</p>
-          <p style="color: #444; line-height: 1.6;">Complétez-les pour avancer dans le processus de recrutement.</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${SITE_URL}/dashboard" style="background-color: #2D5BFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Passer les tests</a>
-          </div>
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">N'oubliez pas vos tests !</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Il vous reste des tests à compléter pour votre candidature au poste de <strong>${data.jobTitle || 'poste'}</strong>.`)}
+          ${p('Complétez-les pour avancer dans le processus de recrutement.')}
+          ${btn('Passer les tests', `${SITE_URL}/dashboard`)}
         `),
       };
 
     case 'status_change':
       return {
-        subject: `Mise à jour de votre candidature — AMBITIA`,
+        subject: 'Mise à jour de votre candidature — AMBITIA',
         html: wrap(`
-          <h2 style="color: #1A1D29;">Mise à jour de votre candidature</h2>
-          <p style="color: #444; line-height: 1.6;">Bonjour ${data.name || 'Candidat'},</p>
-          <p style="color: #444; line-height: 1.6;">Le statut de votre candidature pour <strong>${data.jobTitle || 'poste'}</strong> a été mis à jour : <strong>${data.status || ''}</strong>.</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${SITE_URL}/dashboard" style="background-color: #2D5BFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Voir ma candidature</a>
-          </div>
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Mise à jour de votre candidature</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Le statut de votre candidature pour <strong>${data.jobTitle || 'poste'}</strong> a été mis à jour : <strong>${data.status || ''}</strong>.`)}
+          ${btn('Voir ma candidature', `${SITE_URL}/dashboard`)}
+        `),
+      };
+
+    case 'status_interview':
+      return {
+        subject: 'Invitation à un entretien — AMBITIA',
+        html: wrap(`
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Félicitations !</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous avons le plaisir de vous informer que votre candidature pour le poste de <strong>${data.jobTitle || 'poste'}</strong> a été retenue pour un entretien.`)}
+          ${p('Un membre de notre équipe vous contactera prochainement pour convenir d\'un créneau.')}
+          ${p('En attendant, préparez-vous en consultant votre tableau de bord :')}
+          ${btn('Mon tableau de bord', `${SITE_URL}/dashboard`)}
+        `),
+      };
+
+    case 'status_hired':
+      return {
+        subject: 'Bienvenue dans l\'équipe — AMBITIA',
+        html: wrap(`
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Bienvenue dans l'équipe !</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous sommes ravis de vous annoncer que vous avez été sélectionné(e) pour le poste de <strong>${data.jobTitle || 'poste'}</strong>.`)}
+          ${p('Un membre de notre équipe vous contactera très prochainement pour les prochaines étapes de votre intégration.')}
+          ${p('Encore félicitations et bienvenue !')}
+          ${btn('Mon tableau de bord', `${SITE_URL}/dashboard`)}
+        `),
+      };
+
+    case 'status_rejected':
+      return {
+        subject: 'Résultat de votre candidature — AMBITIA',
+        html: wrap(`
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Résultat de votre candidature</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous vous remercions pour votre intérêt pour le poste de <strong>${data.jobTitle || 'poste'}</strong> et le temps que vous avez consacré au processus de recrutement.`)}
+          ${p('Après examen attentif de votre candidature, nous avons décidé de ne pas poursuivre pour ce poste. Cette décision ne remet pas en question vos compétences.')}
+          ${p('N\'hésitez pas à consulter nos autres offres — de nouvelles opportunités sont régulièrement publiées.')}
+          ${btn('Voir les postes', `${SITE_URL}/jobs`)}
+        `),
+      };
+
+    case 'status_pool':
+      return {
+        subject: 'Votre profil conservé — AMBITIA',
+        html: wrap(`
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Votre profil a été conservé</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous vous remercions pour votre candidature au poste de <strong>${data.jobTitle || 'poste'}</strong>.`)}
+          ${p('Votre profil a retenu notre attention et a été ajouté à notre vivier de talents. Nous vous recontacterons dès qu\'une opportunité correspondant à votre profil se présentera.')}
+          ${btn('Mon tableau de bord', `${SITE_URL}/dashboard`)}
+        `),
+      };
+
+    case 'status_review':
+      return {
+        subject: 'Candidature en cours d\'examen — AMBITIA',
+        html: wrap(`
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Candidature en examen</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Nous avons bien reçu l'ensemble de vos tests pour le poste de <strong>${data.jobTitle || 'poste'}</strong>.`)}
+          ${p('Votre candidature est actuellement en cours d\'examen par notre équipe. Nous reviendrons vers vous dans les plus brefs délais.')}
+          ${btn('Mon tableau de bord', `${SITE_URL}/dashboard`)}
         `),
       };
 
@@ -106,18 +176,16 @@ function getEmailContent(template: EmailTemplate, data: Record<string, string> =
       return {
         subject: 'Invitation au test de roleplay vocal — AMBITIA',
         html: wrap(`
-          <h2 style="color: #1A1D29;">Test de roleplay vocal</h2>
-          <p style="color: #444; line-height: 1.6;">Bonjour ${data.name || 'Candidat'},</p>
-          <p style="color: #444; line-height: 1.6;">Félicitations ! Votre candidature pour <strong>${data.jobTitle || 'poste'}</strong> a été retenue pour l'étape suivante.</p>
-          <p style="color: #444; line-height: 1.6;">Vous êtes invité(e) à passer un test de roleplay vocal avec notre IA. Ce test simule un appel téléphonique et dure environ 10-15 minutes.</p>
-          <div style="text-align: center; margin: 24px 0;">
-            <a href="${SITE_URL}/dashboard" style="background-color: #2D5BFF; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Passer le test</a>
-          </div>
+          <h2 style="color: #1A1D29; margin: 0 0 16px; font-size: 22px;">Test de roleplay vocal</h2>
+          ${p(`Bonjour ${data.name || 'Candidat'},`)}
+          ${p(`Félicitations ! Votre candidature pour <strong>${data.jobTitle || 'poste'}</strong> a été retenue pour l'étape suivante.`)}
+          ${p('Vous êtes invité(e) à passer un test de roleplay vocal avec notre IA. Ce test simule un appel téléphonique et dure environ 10-15 minutes.')}
+          ${btn('Passer le test', `${SITE_URL}/dashboard`)}
         `),
       };
 
     default:
-      return { subject: 'AMBITIA', html: wrap('<p>Notification</p>') };
+      return { subject: 'AMBITIA', html: wrap(p('Notification')) };
   }
 }
 
@@ -172,6 +240,16 @@ serve(async (req) => {
     }
 
     const result = await resendResponse.json();
+
+    // Log email in database
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    await supabase.from('email_notifications').insert({
+      recipient: to,
+      template,
+      subject,
+      resend_id: result.id,
+      sent_at: new Date().toISOString(),
+    }).catch(() => {}); // Don't fail if logging fails
 
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

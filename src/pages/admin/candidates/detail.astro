@@ -448,6 +448,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
       // Save status handler
       document.getElementById('save-status')!.addEventListener('click', async () => {
+        const { data: { session: adminSession } } = await supabase.auth.getSession();
+        if (!adminSession) return;
+
         const newStatus = (document.getElementById('status-select') as HTMLSelectElement).value;
         const { error: updateError } = await supabase
           .from('applications')
@@ -461,7 +464,41 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           const badge = document.getElementById('info-status')!;
           badge.textContent = s.label;
           badge.className = `badge badge-sm ${s.class}`;
-          alert('Statut mis à jour.');
+
+          // Send email notification to candidate
+          const templateMap: Record<string, string> = {
+            interview: 'status_interview',
+            hired: 'status_hired',
+            rejected: 'status_rejected',
+            pool: 'status_pool',
+            review: 'status_review',
+          };
+          const emailTemplate = templateMap[newStatus];
+          if (emailTemplate && profile?.email) {
+            try {
+              await fetch(
+                `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/send-email`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${adminSession.access_token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    template: emailTemplate,
+                    to: profile.email,
+                    data: {
+                      name: profile.full_name || 'Candidat',
+                      jobTitle: job?.title || 'poste',
+                      status: s.label,
+                    },
+                  }),
+                }
+              );
+            } catch {} // Don't block UI if email fails
+          }
+
+          alert('Statut mis à jour.' + (emailTemplate ? ' Email envoyé au candidat.' : ''));
         }
       });
 

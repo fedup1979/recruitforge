@@ -10,6 +10,8 @@ const {
   title = 'AMBITIA — Recrutement international',
   description = 'AMBITIA connecte les talents du monde entier avec des missions stables et bien rémunérées en télétravail.',
 } = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, 'https://ambitia.io').toString();
 ---
 
 <html lang="fr" data-theme="ambitia">
@@ -23,6 +25,9 @@ const {
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="AMBITIA" />
+    <meta property="og:url" content={canonicalUrl} />
+    <link rel="canonical" href={canonicalUrl} />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
