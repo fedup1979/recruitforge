@@ -575,7 +575,7 @@
       "id": "S6-002",
       "title": "Mobile responsive audit and fixes",
       "priority": 42,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "All pages tested on mobile viewport",
         "No horizontal scroll",

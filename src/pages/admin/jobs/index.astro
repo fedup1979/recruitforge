@@ -39,7 +39,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <label class="label"><span class="label-text">Prérequis (un par ligne)</span></label>
           <textarea id="form-requirements" class="textarea textarea-bordered w-full" rows="3" placeholder="Français courant&#10;Connexion internet stable"></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="label"><span class="label-text">Pays (ISO)</span></label>
             <input type="text" id="form-country" class="input input-bordered w-full" placeholder="MG" maxlength="2" required />
@@ -49,7 +49,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             <input type="text" id="form-location" class="input input-bordered w-full" placeholder="Remote" />
           </div>
         </div>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="label"><span class="label-text">Salaire</span></label>
             <input type="number" id="form-salary" class="input input-bordered w-full" placeholder="400" />
@@ -63,7 +63,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             <input type="text" id="form-salary-label" class="input input-bordered w-full" placeholder="400 USD/mois" />
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="label"><span class="label-text">Type de contrat</span></label>
             <input type="text" id="form-contract" class="input input-bordered w-full" placeholder="Freelance" />
@@ -143,8 +143,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               <td><span class="badge badge-sm ${statusColors[j.status] || ''}">${statusLabels[j.status] || j.status}</span></td>
               <td>${appCount}</td>
               <td class="flex gap-1">
-                <button class="btn btn-ghost btn-xs btn-edit" data-id="${j.id}">Modifier</button>
-                <button class="btn btn-ghost btn-xs btn-duplicate" data-id="${j.id}">Dupliquer</button>
+                <button class="btn btn-ghost btn-sm btn-edit" data-id="${j.id}">Modifier</button>
+                <button class="btn btn-ghost btn-sm btn-duplicate" data-id="${j.id}">Dupliquer</button>
                 <select class="select select-ghost select-xs btn-status-change" data-id="${j.id}">
                   <option value="draft" ${j.status === 'draft' ? 'selected' : ''}>Brouillon</option>
                   <option value="open" ${j.status === 'open' ? 'selected' : ''}>Ouvert</option>
