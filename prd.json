@@ -34,7 +34,7 @@
       "id": "S1-003",
       "title": "Create landing page",
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "index.astro page created",
         "Hero section with tagline 'Trouvez le poste qui vous correspond'",
@@ -48,7 +48,7 @@
       "id": "S1-004",
       "title": "Create jobs listing page",
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/jobs page created",
         "Job card component with title, location, country flag, salary badge in local currency",
@@ -63,7 +63,7 @@
       "id": "S1-005",
       "title": "Create job detail page",
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/jobs/[id].astro dynamic page created",
         "Full job description display",
@@ -78,7 +78,7 @@
       "id": "S1-006",
       "title": "Setup Supabase project and auth",
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Supabase client configured in src/lib/supabase.ts",
         "Environment variables for SUPABASE_URL and SUPABASE_ANON_KEY",
@@ -90,7 +90,7 @@
       "id": "S1-007",
       "title": "Create profiles table with RLS",
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "profiles table created with: id, email, full_name, phone, country, role, created_at, updated_at",
         "role CHECK constraint: candidate, recruiter, admin",
@@ -105,7 +105,7 @@
       "id": "S1-008",
       "title": "Create jobs table with RLS (multi-country support)",
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "jobs table created with: id, title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config, created_at",
         "country field: ISO country code (e.g. 'MG', 'MA')",
@@ -124,7 +124,7 @@
       "id": "S1-009",
       "title": "Create About page",
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/about page created",
         "AMBITIA mission statement",
@@ -138,7 +138,7 @@
       "id": "S2-001",
       "title": "Create auth pages (login/signup)",
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/login page with Google OAuth button",
         "/login page with email/password form",
@@ -152,7 +152,7 @@
       "id": "S2-002",
       "title": "Create candidate dashboard",
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/dashboard page (protected route)",
         "Welcome message with user name",
@@ -165,7 +165,7 @@
       "id": "S2-003",
       "title": "Create profile edit page",
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/profile page (protected route)",
         "Form to edit: full_name, phone, country",
@@ -178,7 +178,7 @@
       "id": "S2-004",
       "title": "Create applications table with RLS",
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "applications table: id, user_id, job_id, status, knockout_answers, cv_url, created_at, updated_at",
         "status CHECK: pending, testing, review, interview, hired, rejected, pool",
@@ -192,7 +192,7 @@
       "id": "S2-005",
       "title": "Create application form page",
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/apply/[id] page (protected route)",
         "Job summary at top",
@@ -205,7 +205,7 @@
       "id": "S2-006",
       "title": "Setup Supabase Storage for CVs",
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Storage bucket 'candidates' created",
         "RLS policy: users can upload to their own folder",
@@ -218,7 +218,7 @@
       "id": "S2-007",
       "title": "Add CV upload to application form",
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "File input for PDF upload (max 5MB)",
         "Client-side validation for file type and size",
@@ -232,7 +232,7 @@
       "id": "S2-008",
       "title": "Add progress bar to candidate dashboard",
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Progress bar component showing application progress",
         "Steps: Candidature → Tests → Review → Entretien → Décision",
@@ -244,7 +244,7 @@
       "id": "S3-001",
       "title": "Create test_results table",
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "test_results table: id, application_id, test_type, answers, score, audio_url, transcript, human_score, completed_at, created_at",
         "RLS: candidates see their own results",
@@ -256,7 +256,7 @@
       "id": "S3-002",
       "title": "Create consents table",
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "consents table: id, user_id, consent_type, granted, granted_at, ip_address",
         "consent_type examples: 'big_five_test', 'voice_recording', 'data_processing'",
@@ -268,7 +268,7 @@
       "id": "S3-003",
       "title": "Create Big Five test page",
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/test/bigfive/[applicationId] page",
         "Consent modal before test starts",
@@ -283,7 +283,7 @@
       "id": "S3-004",
       "title": "Create product training quiz page",
       "priority": 21,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/test/quiz/[applicationId] page",
         "Video embed placeholder (ESSR presentation)",
@@ -297,7 +297,7 @@
       "id": "S3-005",
       "title": "Add test status tracking to application",
       "priority": 22,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Dashboard shows which tests are completed",
         "Tests page shows list of required tests for the job",
@@ -310,7 +310,7 @@
       "id": "S3-006",
       "title": "Add test abandonment and retry logic",
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Test progress saved on each answer",
         "Abandoned tests can be resumed within 24h",

@@ -30,6 +30,12 @@
 - Astro project uses static output mode by default (good for GitHub Pages)
 - BaseLayout.astro: use `<BaseLayout title="..." description="...">` to wrap all pages; includes navbar, footer, SEO
 - Import in pages: `import BaseLayout from '../layouts/BaseLayout.astro';`
+- Client-side auth: use `createClient()` in `<script>` tags, check `getSession()`, redirect to /login if null
+- Dynamic routes: use `getStaticPaths()` with jobs data from `src/data/jobs.ts`
+- Supabase client: `import { supabase } from '../lib/supabase'` (server-side) or inline `createClient()` in `<script>` (client-side)
+- Migration files: `supabase/migrations/NNN_description.sql` (numbered sequentially)
+- RLS test files: `tests/rls/tablename.test.sql`
+- Reusable `update_updated_at()` trigger function (defined in 001_create_profiles.sql)
 
 ---
 # Iteration Logs (append below)
@@ -64,4 +70,102 @@
   - Use `dropdown` component for mobile hamburger menu (works without JS)
   - `flex flex-col` on body + `flex-1` on main ensures footer stays at bottom
   - Import path from pages: `../layouts/BaseLayout.astro`
+---
+
+## 2026-02-09 - S1-003
+- Created full landing page with hero section, video placeholder, mission statement, and CTA
+- Hero: tagline "Trouvez le poste qui vous correspond", video teaser placeholder, CTA "Voir les postes" → /jobs
+- Mission section: 3 steps (Postulez → Passez les tests → Décrochez le poste) with numbered cards
+- Bottom CTA section with dark background matching hero
+- Files changed: src/pages/index.astro (updated)
+- **Learnings for future iterations:**
+  - DaisyUI `hero` component works well for full-width hero sections
+  - Use `bg-neutral text-neutral-content` for dark sections, `bg-base-100` for light
+  - `aspect-square` is useful for placeholder containers
+  - `opacity-60` / `opacity-80` / `opacity-90` for text hierarchy on dark backgrounds
+---
+
+## 2026-02-09 - S1-004
+- Created /jobs listing page with country filter, job cards, and empty state
+- Created JobCard.astro component (title, country flag, location, salary badge, contract type)
+- Created src/data/jobs.ts with mock data for 2 Setter ESSR jobs (MG + MA)
+- Client-side country filter with active button state toggle
+- Files changed: src/pages/jobs/index.astro (new), src/components/JobCard.astro (new), src/data/jobs.ts (new)
+- **Learnings for future iterations:**
+  - Static mock data in src/data/ works well until Supabase is connected
+  - Job interface defined in jobs.ts can be reused across pages
+  - Import paths from pages/jobs/: `../../layouts/BaseLayout.astro`, `../../components/`, `../../data/`
+  - Client-side filtering via `<script>` tag works without any framework
+---
+
+## 2026-02-09 - S1-005
+- Created /jobs/[id].astro dynamic page with getStaticPaths
+- Full job detail: description, requirements list, contract info card, salary badge
+- CTA "Postuler" button (disabled for now, links to /apply/[id] later)
+- Back to jobs link
+- Files changed: src/pages/jobs/[id].astro (new)
+- **Learnings for future iterations:**
+  - Astro static mode requires `getStaticPaths()` for dynamic routes
+  - Props passed via getStaticPaths are available as `Astro.props`
+  - Build generates /jobs/setter-essr-mg/index.html and /jobs/setter-essr-ma/index.html
+---
+
+## 2026-02-09 - S1-006
+- Installed @supabase/supabase-js
+- Created src/lib/supabase.ts with client using PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY
+- .env.example already existed with all required variables
+- Google OAuth documented as "configured in Supabase dashboard" (manual step)
+- Files changed: src/lib/supabase.ts (new), package.json, package-lock.json
+- **Learnings for future iterations:**
+  - Supabase client uses `import.meta.env.PUBLIC_*` for Astro public env vars
+  - Import path: `import { supabase } from '../lib/supabase'`
+---
+
+## 2026-02-09 - S1-007
+- Created profiles table migration with RLS policies
+- Fields: id (FK to auth.users), email, full_name, phone, country, role, created_at, updated_at
+- Role CHECK: candidate, recruiter, admin
+- RLS policies: users read/update own, admins read all
+- Trigger: auto-create profile on auth.users insert
+- Trigger: auto-update updated_at
+- RLS test file created in tests/rls/profiles.test.sql
+- Files changed: supabase/migrations/001_create_profiles.sql (new), tests/rls/profiles.test.sql (new)
+---
+
+## 2026-02-09 - S1-008
+- Created jobs table migration with multi-country support and RLS
+- Fields: id, title, description, requirements (TEXT[]), country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config (JSONB), created_at
+- Status CHECK: draft, open, closed
+- RLS: anyone can read open jobs, admins can CRUD all
+- Multi-country: same title can exist for different country rows
+- RLS test file validates candidate restrictions, admin CRUD, and multi-country support
+- Files changed: supabase/migrations/002_create_jobs.sql (new), tests/rls/jobs.test.sql (new)
+- **Learnings for future iterations:**
+  - Migration files in supabase/migrations/ numbered sequentially
+  - RLS test files in tests/rls/ named after the table
+  - `update_updated_at()` function is reusable across tables
+---
+
+## 2026-02-09 - S1-009
+- Created /about page with mission statement, 3-step process, team section, and CTA
+- Team section shows François Dupuis (Fondateur) and Laura Escariz (Co-fondatrice) with initials
+- CTA links to /jobs
+- Files changed: src/pages/about.astro (new)
+---
+
+## 2026-02-09 - Sprint 2 Summary (S2-001 to S2-008)
+- S2-001: Login/signup pages with Google OAuth + email/password (client-side Supabase)
+- S2-002: Candidate dashboard with protected route, applications list, empty state
+- S2-003: Profile edit page with country dropdown (16 African countries)
+- S2-004: Applications table migration with RLS + test file
+- S2-005: Application form (/apply/[id]) with knockout questions + Postuler button enabled on job detail
+- S2-006: Storage bucket 'candidates' with upload/read policies + admin read all
+- S2-007: CV upload (PDF, 5MB max, UUID rename, progress indicator) integrated into apply form
+- S2-008: Progress bar on dashboard (5 steps: Candidature→Tests→Review→Entretien→Décision)
+- **Learnings for future iterations:**
+  - Supabase auth in static Astro: use client-side `<script>` with `createClient` per page
+  - Protected routes: check `getSession()` in script, redirect to /login if null
+  - DaisyUI `steps` component works well for progress bars
+  - File upload to Supabase Storage: use `supabase.storage.from('bucket').upload(path, file)`
+  - Unique constraint error code is '23505'
 ---
