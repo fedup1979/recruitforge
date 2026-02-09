@@ -3,7 +3,7 @@
 # Usage: ./ralph.sh [max_iterations]
 # Run from Git Bash on Windows
 
-set -e
+# Do NOT use set -e: Claude Code may return non-zero and that's OK
 
 MAX_ITERATIONS=${1:-50}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
