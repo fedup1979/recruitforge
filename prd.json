@@ -498,7 +498,7 @@
       "id": "S5-001",
       "title": "Setup Resend for transactional emails",
       "priority": 36,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Resend SDK configured",
         "Edge function for sending emails",
