@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="À propos — AMBITIA" description="Découvrez la mission d'AMBITIA : connecter les talents d'Afrique francophone avec des opportunités internationales de travail à distance.">
+  <!-- Mission Section -->
+  <section class="py-16 px-4 bg-base-100">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-6">À propos d'AMBITIA</h1>
+      <p class="text-lg text-base-content/80 leading-relaxed mb-4">
+        AMBITIA est une plateforme de recrutement international qui connecte les talents motivés d'Afrique francophone avec des opportunités de travail à distance bien rémunérées.
+      </p>
+      <p class="text-lg text-base-content/80 leading-relaxed">
+        Notre mission : donner accès à des carrières internationales grâce à un processus de recrutement transparent, équitable et efficace.
+      </p>
+    </div>
+  </section>
+
+  <!-- How it works - 3 steps -->
+  <section class="py-16 px-4 bg-base-200">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl md:text-3xl font-bold text-base-content text-center mb-12">Comment ça marche</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Step 1 -->
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
+          <h3 class="text-lg font-semibold text-base-content mb-2">Postulez en ligne</h3>
+          <p class="text-base-content/70">Consultez nos offres, choisissez le poste qui vous correspond et envoyez votre candidature en quelques clics.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
+          <h3 class="text-lg font-semibold text-base-content mb-2">Passez les tests</h3>
+          <p class="text-base-content/70">Complétez des tests courts pour évaluer vos compétences : personnalité, connaissances produit et simulation d'appel.</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="text-center">
+          <div class="w-16 h-16 rounded-full bg-accent text-accent-content flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
+          <h3 class="text-lg font-semibold text-base-content mb-2">Décrochez le poste</h3>
+          <p class="text-base-content/70">Recevez une réponse rapide. Si vous êtes sélectionné, démarrez votre formation et votre nouvelle carrière à distance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team / Company placeholder -->
+  <section class="py-16 px-4 bg-base-100">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-base-content mb-6">L'équipe</h2>
+      <p class="text-lg text-base-content/70 mb-8">
+        AMBITIA est fondée par une équipe passionnée par le recrutement international et l'accès à l'emploi.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto">
+        <div class="card bg-base-200">
+          <div class="card-body items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl mb-2">FD</div>
+            <h3 class="font-semibold text-base-content">François Dupuis</h3>
+            <p class="text-sm text-base-content/60">Fondateur</p>
+          </div>
+        </div>
+        <div class="card bg-base-200">
+          <div class="card-body items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-secondary/10 flex items-center justify-center text-3xl mb-2">LE</div>
+            <h3 class="font-semibold text-base-content">Laura Escariz</h3>
+            <p class="text-sm text-base-content/60">Co-fondatrice</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 px-4 bg-neutral text-neutral-content">
+    <div class="max-w-2xl mx-auto text-center">
+      <h2 class="text-2xl md:text-3xl font-bold mb-4">Envie de nous rejoindre ?</h2>
+      <p class="text-lg opacity-80 mb-8">Consultez nos postes ouverts et postulez dès maintenant.</p>
+      <a href="/jobs" class="btn btn-primary btn-lg">Voir les postes</a>
+    </div>
+  </section>
+</BaseLayout>
