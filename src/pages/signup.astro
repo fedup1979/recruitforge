@@ -129,6 +129,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
     } else {
+      // Send welcome email (fire-and-forget)
+      fetch(
+        `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/send-email`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            template: 'welcome',
+            to: email,
+            data: { name: fullName },
+          }),
+        }
+      ).catch(() => {});
+
       window.location.href = '/confirm-email';
     }
   });

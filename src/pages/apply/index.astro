@@ -316,6 +316,37 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       submitBtn.disabled = false;
       uploadProgress.classList.add('hidden');
     } else {
+      // Send application_received email (fire-and-forget)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single();
+      const { data: job } = await supabase
+        .from('jobs')
+        .select('title')
+        .eq('id', jobId)
+        .single();
+
+      fetch(
+        `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/send-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            template: 'application_received',
+            to: session.user.email,
+            data: {
+              name: profile?.full_name || session.user.email?.split('@')[0] || 'Candidat',
+              jobTitle: job?.title || 'poste',
+            },
+          }),
+        }
+      ).catch(() => {});
+
       window.location.href = '/dashboard';
     }
   });
