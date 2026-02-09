@@ -485,7 +485,7 @@
       "id": "S4-012",
       "title": "Add CSV export for candidates",
       "priority": 35,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Export button on /admin/candidates page",
         "Exports current filtered view (respects active filters)",

@@ -11,12 +11,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         <button class="btn btn-sm join-item" id="view-kanban">Kanban</button>
       </div>
     </div>
-    <input
-      type="text"
-      id="search-input"
-      placeholder="Rechercher par nom ou email…"
-      class="input input-bordered input-sm w-full sm:w-64"
-    />
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Rechercher par nom ou email…"
+        class="input input-bordered input-sm w-full sm:w-64"
+      />
+      <button id="btn-export" class="btn btn-outline btn-sm">Exporter CSV</button>
+    </div>
   </div>
 
   <!-- Filters -->
@@ -510,6 +513,39 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
     document.getElementById('view-table')!.addEventListener('click', () => switchView('table'));
     document.getElementById('view-kanban')!.addEventListener('click', () => switchView('kanban'));
+
+    // CSV Export
+    document.getElementById('btn-export')!.addEventListener('click', () => {
+      const headers = ['Nom', 'Email', 'Pays', 'Téléphone', 'Poste', 'Statut', 'Score', 'Date'];
+      const rows = filteredApps.map((app: any) => {
+        const p = app.profiles;
+        const j = app.jobs;
+        const score = getScore(app);
+        const status = statusLabels[app.status]?.label || app.status;
+        const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+        return [
+          p?.full_name || '',
+          p?.email || '',
+          p?.country || '',
+          p?.phone || '',
+          j?.title || '',
+          status,
+          score !== null ? `${score}%` : '',
+          date,
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+      });
+
+      const bom = '\uFEFF'; // UTF-8 BOM for French characters
+      const csv = bom + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const today = new Date().toISOString().split('T')[0];
+      a.href = url;
+      a.download = `ambitia-candidates-${today}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
 
     // Check URL for initial view
     if (new URLSearchParams(window.location.search).get('view') === 'kanban') {
