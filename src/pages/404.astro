@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Page introuvable — AMBITIA" description="La page que vous cherchez n'existe pas.">
+  <section class="py-24 px-4">
+    <div class="max-w-md mx-auto text-center">
+      <div class="text-8xl font-bold text-primary/20 mb-4">404</div>
+      <h1 class="text-2xl font-bold text-base-content mb-4">Page introuvable</h1>
+      <p class="text-base-content/60 mb-8">La page que vous cherchez n'existe pas ou a été déplacée.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/" class="btn btn-primary">Retour à l'accueil</a>
+        <a href="/jobs" class="btn btn-outline">Voir les postes</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

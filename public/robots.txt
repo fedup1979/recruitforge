@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /apply/
+Disallow: /test/
+
+Sitemap: https://ambitia.io/sitemap-index.xml
