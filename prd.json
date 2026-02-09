@@ -523,7 +523,7 @@
       "id": "S5-003",
       "title": "Create pool management page",
       "priority": 38,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/pool page",
         "List candidates in pool status grouped by job",

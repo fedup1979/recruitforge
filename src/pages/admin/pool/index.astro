@@ -1,0 +1,192 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Vivier — AMBITIA Admin">
+  <h1 class="text-2xl font-bold text-base-content mb-6">Vivier de candidats</h1>
+
+  <!-- Filter -->
+  <div class="flex flex-wrap gap-3 mb-6">
+    <select id="filter-job" class="select select-bordered select-sm">
+      <option value="">Tous les postes</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Pool list -->
+  <div id="pool-content" class="hidden">
+    <div id="pool-list" class="space-y-4">
+      <!-- Populated by JS -->
+    </div>
+    <div id="empty-state" class="text-center py-12 text-base-content/50 hidden">
+      Aucun candidat dans le vivier.
+    </div>
+  </div>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    let allPoolApps: any[] = [];
+
+    async function loadPool() {
+      const { data: apps } = await supabase
+        .from('applications')
+        .select(`
+          id, status, created_at,
+          profiles(id, full_name, email, country, phone),
+          jobs(id, title, country, salary_label)
+        `)
+        .eq('status', 'pool')
+        .order('created_at', { ascending: false });
+
+      allPoolApps = apps || [];
+
+      // Populate job filter
+      const jobs = [...new Set(allPoolApps.map((a: any) => a.jobs?.title).filter(Boolean))];
+      const jobSelect = document.getElementById('filter-job') as HTMLSelectElement;
+      // Clear existing options beyond the first
+      while (jobSelect.options.length > 1) jobSelect.remove(1);
+      jobs.forEach(j => {
+        const opt = document.createElement('option');
+        opt.value = j;
+        opt.textContent = j;
+        jobSelect.appendChild(opt);
+      });
+
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('pool-content')!.classList.remove('hidden');
+
+      renderPool();
+    }
+
+    function renderPool() {
+      const jobFilter = (document.getElementById('filter-job') as HTMLSelectElement).value;
+      let filtered = allPoolApps;
+
+      if (jobFilter) {
+        filtered = filtered.filter((a: any) => a.jobs?.title === jobFilter);
+      }
+
+      const poolList = document.getElementById('pool-list')!;
+      const emptyState = document.getElementById('empty-state')!;
+
+      if (filtered.length === 0) {
+        poolList.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      // Group by job title
+      const grouped: Record<string, any[]> = {};
+      filtered.forEach((a: any) => {
+        const key = a.jobs?.title || 'Autre';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(a);
+      });
+
+      poolList.innerHTML = Object.entries(grouped).map(([title, apps]) => {
+        const rows = apps.map((app: any) => {
+          const p = app.profiles;
+          const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+          return `
+            <tr>
+              <td class="font-medium">${p?.full_name || '—'}</td>
+              <td class="text-sm">${p?.email || '—'}</td>
+              <td>${p?.country || '—'}</td>
+              <td class="text-sm">${date}</td>
+              <td class="flex gap-1">
+                <button class="btn btn-xs btn-outline btn-info btn-reactivate" data-id="${app.id}">Réactiver</button>
+                <button class="btn btn-xs btn-outline btn-notify" data-id="${app.id}" data-email="${p?.email || ''}" data-name="${p?.full_name || ''}">Notifier</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="card bg-base-200">
+            <div class="card-body p-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-base-content">${title}</h3>
+                <span class="badge badge-sm">${apps.length} candidat(s)</span>
+              </div>
+              <div class="overflow-x-auto mt-2">
+                <table class="table table-sm">
+                  <thead>
+                    <tr><th>Nom</th><th>Email</th><th>Pays</th><th>Date</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Reactivate buttons
+      poolList.querySelectorAll('.btn-reactivate').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id')!;
+          const { error } = await supabase
+            .from('applications')
+            .update({ status: 'review' })
+            .eq('id', id);
+
+          if (error) {
+            alert('Erreur: ' + error.message);
+          } else {
+            alert('Candidat réactivé (statut: Review).');
+            loadPool();
+          }
+        });
+      });
+
+      // Notify buttons
+      poolList.querySelectorAll('.btn-notify').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const email = btn.getAttribute('data-email');
+          const name = btn.getAttribute('data-name');
+          if (!email) { alert('Pas d\'email disponible.'); return; }
+
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+
+          const response = await fetch(
+            `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/send-email`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                template: 'status_change',
+                to: email,
+                data: { name: name || 'Candidat', status: 'En vivier — Nous gardons votre profil', jobTitle: '' },
+              }),
+            }
+          );
+
+          if (response.ok) {
+            alert('Notification envoyée.');
+          } else {
+            alert('Erreur lors de l\'envoi.');
+          }
+        });
+      });
+    }
+
+    document.getElementById('filter-job')!.addEventListener('change', renderPool);
+
+    loadPool();
+  </script>
+</AdminLayout>
