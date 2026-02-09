@@ -409,7 +409,7 @@
       "id": "S4-007",
       "title": "Setup Vapi integration for voice roleplay",
       "priority": 30,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Vapi SDK configured",
         "Edge function to create Vapi call session",
