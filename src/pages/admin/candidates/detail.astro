@@ -297,10 +297,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       if (app.knockout_answers && typeof app.knockout_answers === 'object') {
         const answers = app.knockout_answers as Record<string, any>;
         const questionLabels: Record<string, string> = {
-          availability: 'Disponibilité immédiate',
-          internet: 'Connexion internet stable',
-          french: 'Niveau de français',
-          experience: 'Expérience en appels',
+          availability: 'Disponibilité Lun-Ven 9h-18h',
+          internet: 'Connexion internet stable (≥10 Mbps)',
+          french_level: 'Niveau de français',
+          call_experience: 'Expérience en appels',
         };
         knockoutDiv.innerHTML = Object.entries(answers).map(([key, val]) =>
           `<div class="flex justify-between"><span class="text-base-content/60">${questionLabels[key] || key}</span><span class="font-medium">${val}</span></div>`
@@ -318,11 +318,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         noTests.classList.remove('hidden');
       } else {
         testDiv.innerHTML = testResults.map((t: any) => {
-          const typeLabel = t.test_type === 'bigfive' ? 'Big Five (TIPI-10)' : t.test_type === 'quiz' ? 'Quiz ESSR' : t.test_type;
+          const typeLabel = t.test_type === 'big_five' ? 'Big Five (TIPI-10)' : t.test_type === 'quiz' ? 'Quiz ESSR' : t.test_type === 'human_score' ? 'Score humain' : t.test_type;
           const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
           let details = '';
 
-          if (t.test_type === 'bigfive' && t.result_data) {
+          if (t.test_type === 'big_five' && t.result_data) {
             const traits = t.result_data as Record<string, number>;
             details = `<div class="grid grid-cols-5 gap-2 mt-2">${
               Object.entries(traits).map(([trait, score]) =>
