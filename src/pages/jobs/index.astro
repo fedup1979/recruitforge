@@ -32,6 +32,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <p class="text-base-content/40">Revenez bientôt, de nouvelles offres arrivent régulièrement.</p>
       </div>
 
+      <!-- Error state -->
+      <div class="text-center py-16 hidden" id="error-state">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-error/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <h2 class="text-xl font-semibold text-base-content/50 mb-2">Erreur de chargement</h2>
+        <p class="text-base-content/40 mb-2" id="error-detail"></p>
+        <button class="btn btn-primary btn-sm mt-4" id="retry-btn">Réessayer</button>
+      </div>
+
       <!-- Filtered empty state -->
       <div class="text-center py-16 hidden" id="no-results">
         <p class="text-lg text-base-content/50">Aucun poste disponible pour ce pays.</p>
@@ -69,6 +79,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const grid = document.getElementById('jobs-grid')!;
   const emptyState = document.getElementById('empty-state')!;
   const noResults = document.getElementById('no-results')!;
+  const errorState = document.getElementById('error-state')!;
+  const errorDetail = document.getElementById('error-detail')!;
 
   interface Job {
     id: string;
@@ -82,16 +94,44 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   let allJobs: Job[] = [];
 
+  function showError(msg: string) {
+    loadingDiv.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    errorDetail.textContent = msg;
+    errorState.classList.remove('hidden');
+  }
+
   async function init() {
-    const { data: jobs, error } = await supabase
-      .from('jobs')
-      .select('id, title, description, country, location, salary_label, contract_type')
-      .eq('status', 'open')
-      .order('created_at', { ascending: false });
+    // Reset UI
+    loadingDiv.classList.remove('hidden');
+    filterDiv.classList.add('hidden');
+    grid.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    errorState.classList.add('hidden');
+    noResults.classList.add('hidden');
+
+    let jobs, error;
+    try {
+      const result = await supabase
+        .from('jobs')
+        .select('id, title, description, country, location, salary_label, contract_type')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      jobs = result.data;
+      error = result.error;
+    } catch (e: any) {
+      showError('Impossible de contacter le serveur: ' + (e.message || e));
+      return;
+    }
 
     loadingDiv.classList.add('hidden');
 
-    if (error || !jobs || jobs.length === 0) {
+    if (error) {
+      showError('Erreur: ' + error.message);
+      return;
+    }
+
+    if (!jobs || jobs.length === 0) {
       emptyState.classList.remove('hidden');
       return;
     }
@@ -171,5 +211,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     }).join('');
   }
 
+  document.getElementById('retry-btn')?.addEventListener('click', init);
   init();
 </script>

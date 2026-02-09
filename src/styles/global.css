@@ -3,6 +3,13 @@
   themes: ambitia --default;
 }
 
+/* Fix: DaisyUI component display properties override Tailwind's .hidden utility
+   due to CSS Cascade Layer ordering (daisyui.l1.l2.l3 > daisyui.l1.l2).
+   This ensures .hidden always wins regardless of layer priority. */
+.hidden {
+  display: none !important;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }

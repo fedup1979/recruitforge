@@ -234,3 +234,34 @@
   - Astro static build generates clean index.html per route for GitHub Pages compatibility
   - All 47 user stories across 6 sprints are now complete
 ---
+
+## 2026-02-09 - Post-Audit Fixes
+- **Audit performed by Nigel** identified several bugs and missing features
+- Analysis showed most "critical" bugs were non-issues (wrong URLs tested, data exists, admin already hidden)
+- Real fixes implemented:
+  1. Custom 404 page (`src/pages/404.astro`) with AMBITIA branding
+  2. Sitemap via `@astrojs/sitemap` — filters out private pages (admin, dashboard, tests, etc.)
+  3. `public/robots.txt` — disallows admin, dashboard, test routes
+  4. AMBITIA branded favicon (gradient blue-purple with letter A) replaces Astro default
+  5. Forgot password page (`/forgot-password`) with Supabase `resetPasswordForEmail`
+  6. Email confirmation page (`/confirm-email`) shown after signup
+  7. "Mot de passe oublié ?" link added on login page
+  8. Google OAuth button restyled (white bg + border, visible on all themes)
+  9. Homepage hero: replaced text-only video placeholder with branded gradient illustration
+  10. Signup redirects to `/confirm-email` after successful registration
+- Build: 24 pages generated in 2.08s (was 21, now +3 new pages)
+- Files changed: 7 modified + 4 new pages + robots.txt
+- **Audit items that were NOT bugs:**
+  - BUG-001 (routes 404): Audit tested old path-based URLs. Actual routes use query params.
+  - BUG-002 (admin visible): AdminLayout already hides content with `class="hidden"` until admin JS check.
+  - BUG-003 (no jobs): 7 jobs exist in DB, anon key reads them via RLS. Issue was audit timing.
+  - BUG-007 (greeting name): Dashboard code has proper fallback chain (profile → metadata → email → 'candidat').
+  - BUG-008 (profile toast): Success message starts hidden, only shown after form submit.
+  - MISSING-008 (no seed data): 7 demo jobs already in Supabase.
+- **Learnings for future iterations:**
+  - Audit reports may test wrong URLs — always verify against actual code before fixing
+  - Static site admin protection pattern: content in `class="hidden"` div, shown by JS after auth check
+  - `@astrojs/sitemap` filter function takes page URL string, return true to include
+  - Supabase `resetPasswordForEmail` needs `redirectTo` option for the reset link
+  - GitHub Pages uses 404.html at root — Astro generates it from src/pages/404.astro
+---
