@@ -46,6 +46,9 @@ const {
             <li><a href="/">Accueil</a></li>
             <li><a href="/jobs">Postes</a></li>
             <li><a href="/about">À propos</a></li>
+            <li class="hidden" id="mobile-dashboard"><a href="/dashboard">Dashboard</a></li>
+            <li class="hidden" id="mobile-admin"><a href="/admin">Admin</a></li>
+            <li class="hidden" id="mobile-logout"><a href="#" id="mobile-logout-btn">Déconnexion</a></li>
           </ul>
         </div>
         <a href="/" class="btn btn-ghost text-xl font-bold">AMBITIA</a>
@@ -60,7 +63,8 @@ const {
       <div class="navbar-end" id="navbar-auth">
         <a href="/login" class="btn btn-primary btn-sm" id="nav-login">Connexion</a>
         <div class="hidden flex items-center gap-2" id="nav-logged">
-          <a href="/dashboard" class="btn btn-ghost btn-sm">Dashboard</a>
+          <a href="/dashboard" class="btn btn-ghost btn-sm" id="nav-dashboard">Dashboard</a>
+          <a href="/admin" class="btn btn-ghost btn-sm hidden" id="nav-admin">Admin</a>
           <button class="btn btn-outline btn-sm" id="nav-logout">Déconnexion</button>
         </div>
       </div>
@@ -93,18 +97,43 @@ const {
 
       async function updateNav() {
         const { data: { session } } = await supabase.auth.getSession();
-        const loginBtn = document.getElementById('nav-login');
+        if (!session) return;
+
+        // Show logged-in nav
+        document.getElementById('nav-login')?.classList.add('hidden');
         const loggedDiv = document.getElementById('nav-logged');
-        if (session) {
-          loginBtn?.classList.add('hidden');
-          loggedDiv?.classList.remove('hidden');
-          loggedDiv?.classList.add('flex');
+        loggedDiv?.classList.remove('hidden');
+        loggedDiv?.classList.add('flex');
+
+        // Show mobile logged-in links
+        document.getElementById('mobile-dashboard')?.classList.remove('hidden');
+        document.getElementById('mobile-logout')?.classList.remove('hidden');
+
+        // Check if admin
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.role === 'admin') {
+          // Show admin link, hide dashboard link (admin goes to /admin)
+          document.getElementById('nav-admin')?.classList.remove('hidden');
+          document.getElementById('nav-dashboard')?.classList.add('hidden');
+          document.getElementById('mobile-admin')?.classList.remove('hidden');
+          document.getElementById('mobile-dashboard')?.classList.add('hidden');
         }
       }
 
-      document.getElementById('nav-logout')?.addEventListener('click', async () => {
+      async function handleLogout() {
         await supabase.auth.signOut();
         window.location.href = '/';
+      }
+
+      document.getElementById('nav-logout')?.addEventListener('click', handleLogout);
+      document.getElementById('mobile-logout-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleLogout();
       });
 
       updateNav();
