@@ -603,7 +603,7 @@
       "id": "S6-004",
       "title": "Create Terms of Service page",
       "priority": 44,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/terms page",
         "User obligations",
