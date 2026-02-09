@@ -93,6 +93,17 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- Roleplay recordings -->
+    <div class="card bg-base-200 mb-6" id="roleplay-section">
+      <div class="card-body">
+        <h2 class="card-title text-base">Enregistrements Roleplay</h2>
+        <div id="roleplay-recordings" class="space-y-4">
+          <!-- Populated by JS -->
+        </div>
+        <div id="no-recordings" class="text-base-content/50 text-sm hidden">Aucun enregistrement disponible.</div>
+      </div>
+    </div>
+
     <!-- Human scoring -->
     <div class="card bg-base-200 mb-6" id="scoring-section">
       <div class="card-body">
@@ -330,6 +341,58 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                 </div>
               </div>
               ${details}
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Roleplay recordings
+      const roleplayTests = testResults.filter((t: any) => t.test_type?.startsWith('roleplay_'));
+      const recordingsDiv = document.getElementById('roleplay-recordings')!;
+      const noRecordings = document.getElementById('no-recordings')!;
+
+      if (roleplayTests.length === 0) {
+        noRecordings.classList.remove('hidden');
+      } else {
+        recordingsDiv.innerHTML = roleplayTests.map((t: any, idx: number) => {
+          const data = t.result_data || {};
+          const scenarioName = data.scenario_name || t.test_type;
+          const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
+          const transcript = data.transcript || '';
+          const audioUrl = data.recording_url || '';
+
+          let audioHtml = '';
+          if (audioUrl) {
+            audioHtml = `
+              <div class="mt-3">
+                <p class="text-xs text-base-content/50 mb-1">Enregistrement audio</p>
+                <audio controls class="w-full" preload="metadata">
+                  <source src="${audioUrl}" type="audio/mpeg" />
+                  Votre navigateur ne supporte pas la lecture audio.
+                </audio>
+              </div>
+            `;
+          }
+
+          let transcriptHtml = '';
+          if (transcript) {
+            transcriptHtml = `
+              <div class="mt-3">
+                <p class="text-xs text-base-content/50 mb-1">Transcription</p>
+                <div class="bg-base-100 rounded-box p-3 text-sm max-h-48 overflow-y-auto whitespace-pre-wrap">${transcript}</div>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="bg-base-100 rounded-box p-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-medium text-sm">${scenarioName}</span>
+                <span class="text-xs text-base-content/50">${date}</span>
+              </div>
+              ${audioHtml}
+              ${transcriptHtml}
+              ${!audioUrl && !transcript ? '<p class="text-xs text-base-content/40">Enregistrement en attente de traitement...</p>' : ''}
             </div>
           `;
         }).join('');

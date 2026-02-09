@@ -441,7 +441,7 @@
       "id": "S4-009",
       "title": "Add audio player and transcript to admin candidate detail",
       "priority": 32,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Audio player component on candidate detail page for roleplay recordings",
         "Play/pause/seek controls",
