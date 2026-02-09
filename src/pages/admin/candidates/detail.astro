@@ -40,6 +40,23 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- Composite score banner -->
+    <div id="composite-banner" class="hidden mb-6">
+      <div class="card bg-primary/10 border border-primary/20">
+        <div class="card-body py-4 flex-row items-center justify-between">
+          <div>
+            <h2 class="font-bold text-base-content">Score composite</h2>
+            <p class="text-sm text-base-content/60" id="composite-breakdown"></p>
+          </div>
+          <div class="text-right">
+            <span class="text-3xl font-bold text-primary" id="composite-score">—</span>
+            <span class="text-base-content/50">/100</span>
+            <span id="composite-verdict" class="badge ml-2"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Info grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <!-- Profile info -->
@@ -318,7 +335,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         noTests.classList.remove('hidden');
       } else {
         testDiv.innerHTML = testResults.map((t: any) => {
-          const typeLabel = t.test_type === 'big_five' ? 'Big Five (TIPI-10)' : t.test_type === 'quiz' ? 'Quiz ESSR' : t.test_type === 'human_score' ? 'Score humain' : t.test_type;
+          const typeLabels: Record<string, string> = {
+            big_five: 'Big Five (TIPI-10)', quiz: 'Quiz ESSR', human_score: 'Score humain',
+            composite: 'Score composite', roleplay: 'Roleplay', roleplay_easy: 'Roleplay (facile)', roleplay_medium: 'Roleplay (moyen)',
+          };
+          const typeLabel = typeLabels[t.test_type] || t.test_type;
           const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
           let details = '';
 
@@ -396,6 +417,29 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             </div>
           `;
         }).join('');
+      }
+
+      // Composite score display
+      const compositeTest = testResults.find((t: any) => t.test_type === 'composite');
+      if (compositeTest) {
+        document.getElementById('composite-banner')!.classList.remove('hidden');
+        document.getElementById('composite-score')!.textContent = String(compositeTest.score);
+        const breakdown = compositeTest.result_data as any;
+        if (breakdown) {
+          document.getElementById('composite-breakdown')!.textContent =
+            `Big Five: ${breakdown.big_five}% | Quiz: ${breakdown.quiz}% | Profil: ${breakdown.profile}%`;
+        }
+        const verdict = document.getElementById('composite-verdict')!;
+        if (compositeTest.score >= 70) {
+          verdict.textContent = 'Fast-track';
+          verdict.className = 'badge badge-success ml-2';
+        } else if (compositeTest.score >= 40) {
+          verdict.textContent = 'Review';
+          verdict.className = 'badge badge-warning ml-2';
+        } else {
+          verdict.textContent = 'Rejeté';
+          verdict.className = 'badge badge-error ml-2';
+        }
       }
 
       // Notes

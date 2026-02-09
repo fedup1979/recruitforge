@@ -101,10 +101,62 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     // Update application status if base tests done and status is pending/testing
     if (baseCompleted && (app.status === 'pending' || app.status === 'testing')) {
-      await supabase
-        .from('applications')
-        .update({ status: 'review' })
-        .eq('id', app.id);
+      // Calculate composite score
+      const bigFiveResult = completedMap.get('big_five');
+      const quizResult = completedMap.get('quiz');
+
+      if (bigFiveResult && quizResult && !completedMap.has('composite')) {
+        // Big Five: total ranges ~5-35, normalize to 0-100
+        const bigFiveNorm = Math.min(100, Math.round((bigFiveResult.score / 35) * 100));
+        // Quiz: already 0-100
+        const quizNorm = quizResult.score;
+        // Knockout profile scoring (from application answers)
+        const { data: appData } = await supabase
+          .from('applications')
+          .select('knockout_answers')
+          .eq('id', app.id)
+          .single();
+
+        let profileScore = 50; // default
+        if (appData?.knockout_answers) {
+          const ka = appData.knockout_answers as Record<string, string>;
+          let pts = 0;
+          // Availability: yes=10
+          if (ka.availability === 'yes') pts += 10;
+          // Internet: yes=10
+          if (ka.internet === 'yes') pts += 10;
+          // French: native=10, fluent=7, intermediate=3, beginner=0
+          const frenchMap: Record<string, number> = { native: 10, fluent: 7, intermediate: 3, beginner: 0 };
+          pts += frenchMap[ka.french_level] ?? 5;
+          // Call experience: yes_2plus=10, yes_1_2=7, yes_less_1=3, none=0
+          const expMap: Record<string, number> = { yes_2: 10, yes_1: 7, yes_less_1: 3, none: 0 };
+          pts += expMap[ka.call_experience] ?? 5;
+          profileScore = Math.round((pts / 40) * 100);
+        }
+
+        // Composite: Big Five 40% + Quiz 30% + Profile 30%
+        const composite = Math.round(bigFiveNorm * 0.4 + quizNorm * 0.3 + profileScore * 0.3);
+
+        // Save composite score
+        await supabase.from('test_results').insert({
+          application_id: app.id,
+          test_type: 'composite',
+          score: composite,
+          result_data: { big_five: bigFiveNorm, quiz: quizNorm, profile: profileScore },
+          completed_at: new Date().toISOString(),
+        });
+
+        // Auto-decision based on composite score
+        if (composite < 40) {
+          // Auto-reject
+          await supabase.from('applications').update({ status: 'rejected' }).eq('id', app.id);
+        } else {
+          // Move to review (admin will decide)
+          await supabase.from('applications').update({ status: 'review' }).eq('id', app.id);
+        }
+      } else if (!completedMap.has('composite')) {
+        await supabase.from('applications').update({ status: 'review' }).eq('id', app.id);
+      }
     } else if (!baseCompleted && app.status === 'pending') {
       await supabase
         .from('applications')
