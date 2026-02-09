@@ -1,0 +1,295 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Postes — AMBITIA Admin">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold text-base-content">Gestion des postes</h1>
+    <button id="btn-create" class="btn btn-primary btn-sm">+ Nouveau poste</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Jobs list -->
+  <div id="jobs-list" class="hidden space-y-4">
+    <!-- Populated by JS -->
+  </div>
+  <div id="no-jobs" class="text-center py-12 text-base-content/50 hidden">
+    Aucun poste créé.
+  </div>
+
+  <!-- Create/Edit modal -->
+  <dialog id="job-modal" class="modal">
+    <div class="modal-box max-w-lg">
+      <h3 class="font-bold text-lg" id="modal-title">Nouveau poste</h3>
+      <form id="job-form" class="space-y-4 mt-4">
+        <input type="hidden" id="form-id" />
+        <div>
+          <label class="label"><span class="label-text">Titre</span></label>
+          <input type="text" id="form-title" class="input input-bordered w-full" required />
+        </div>
+        <div>
+          <label class="label"><span class="label-text">Description</span></label>
+          <textarea id="form-description" class="textarea textarea-bordered w-full" rows="4" required></textarea>
+        </div>
+        <div>
+          <label class="label"><span class="label-text">Prérequis (un par ligne)</span></label>
+          <textarea id="form-requirements" class="textarea textarea-bordered w-full" rows="3" placeholder="Français courant&#10;Connexion internet stable"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="label"><span class="label-text">Pays (ISO)</span></label>
+            <input type="text" id="form-country" class="input input-bordered w-full" placeholder="MG" maxlength="2" required />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Lieu</span></label>
+            <input type="text" id="form-location" class="input input-bordered w-full" placeholder="Remote" />
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="label"><span class="label-text">Salaire</span></label>
+            <input type="number" id="form-salary" class="input input-bordered w-full" placeholder="400" />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Devise</span></label>
+            <input type="text" id="form-currency" class="input input-bordered w-full" placeholder="USD" maxlength="3" />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Label salaire</span></label>
+            <input type="text" id="form-salary-label" class="input input-bordered w-full" placeholder="400 USD/mois" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="label"><span class="label-text">Type de contrat</span></label>
+            <input type="text" id="form-contract" class="input input-bordered w-full" placeholder="Freelance" />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Statut</span></label>
+            <select id="form-status" class="select select-bordered w-full">
+              <option value="draft">Brouillon</option>
+              <option value="open">Ouvert</option>
+              <option value="closed">Fermé</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn" id="btn-cancel">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit">Créer</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const modal = document.getElementById('job-modal') as HTMLDialogElement;
+    const form = document.getElementById('job-form') as HTMLFormElement;
+    let allJobs: any[] = [];
+
+    const statusColors: Record<string, string> = {
+      draft: 'badge-ghost',
+      open: 'badge-success',
+      closed: 'badge-error',
+    };
+    const statusLabels: Record<string, string> = {
+      draft: 'Brouillon',
+      open: 'Ouvert',
+      closed: 'Fermé',
+    };
+
+    async function loadJobs() {
+      const { data: jobs } = await supabase
+        .from('jobs')
+        .select('*, applications(count)')
+        .order('title', { ascending: true });
+
+      allJobs = jobs || [];
+
+      document.getElementById('loading')!.classList.add('hidden');
+
+      if (allJobs.length === 0) {
+        document.getElementById('no-jobs')!.classList.remove('hidden');
+        return;
+      }
+
+      const jobsList = document.getElementById('jobs-list')!;
+      jobsList.classList.remove('hidden');
+
+      // Group by title
+      const grouped: Record<string, any[]> = {};
+      allJobs.forEach(j => {
+        if (!grouped[j.title]) grouped[j.title] = [];
+        grouped[j.title].push(j);
+      });
+
+      jobsList.innerHTML = Object.entries(grouped).map(([title, variants]) => {
+        const rows = variants.map(j => {
+          const appCount = j.applications?.[0]?.count || 0;
+          return `
+            <tr>
+              <td>${j.country}</td>
+              <td>${j.salary_label || '—'}</td>
+              <td><span class="badge badge-sm ${statusColors[j.status] || ''}">${statusLabels[j.status] || j.status}</span></td>
+              <td>${appCount}</td>
+              <td class="flex gap-1">
+                <button class="btn btn-ghost btn-xs btn-edit" data-id="${j.id}">Modifier</button>
+                <button class="btn btn-ghost btn-xs btn-duplicate" data-id="${j.id}">Dupliquer</button>
+                <select class="select select-ghost select-xs btn-status-change" data-id="${j.id}">
+                  <option value="draft" ${j.status === 'draft' ? 'selected' : ''}>Brouillon</option>
+                  <option value="open" ${j.status === 'open' ? 'selected' : ''}>Ouvert</option>
+                  <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Fermé</option>
+                </select>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="card bg-base-200">
+            <div class="card-body p-4">
+              <h3 class="font-semibold text-base-content">${title}</h3>
+              <div class="overflow-x-auto">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Pays</th>
+                      <th>Salaire</th>
+                      <th>Statut</th>
+                      <th>Candidats</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Edit buttons
+      jobsList.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', () => openEdit(btn.getAttribute('data-id')!));
+      });
+
+      // Duplicate buttons
+      jobsList.querySelectorAll('.btn-duplicate').forEach(btn => {
+        btn.addEventListener('click', () => openDuplicate(btn.getAttribute('data-id')!));
+      });
+
+      // Status change
+      jobsList.querySelectorAll('.btn-status-change').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+          const jobId = (e.target as HTMLSelectElement).getAttribute('data-id')!;
+          const newStatus = (e.target as HTMLSelectElement).value;
+          await supabase.from('jobs').update({ status: newStatus }).eq('id', jobId);
+          loadJobs();
+        });
+      });
+    }
+
+    function resetForm() {
+      (document.getElementById('form-id') as HTMLInputElement).value = '';
+      (document.getElementById('form-title') as HTMLInputElement).value = '';
+      (document.getElementById('form-description') as HTMLTextAreaElement).value = '';
+      (document.getElementById('form-requirements') as HTMLTextAreaElement).value = '';
+      (document.getElementById('form-country') as HTMLInputElement).value = '';
+      (document.getElementById('form-location') as HTMLInputElement).value = '';
+      (document.getElementById('form-salary') as HTMLInputElement).value = '';
+      (document.getElementById('form-currency') as HTMLInputElement).value = '';
+      (document.getElementById('form-salary-label') as HTMLInputElement).value = '';
+      (document.getElementById('form-contract') as HTMLInputElement).value = '';
+      (document.getElementById('form-status') as HTMLSelectElement).value = 'draft';
+    }
+
+    function fillForm(job: any) {
+      (document.getElementById('form-id') as HTMLInputElement).value = job.id || '';
+      (document.getElementById('form-title') as HTMLInputElement).value = job.title || '';
+      (document.getElementById('form-description') as HTMLTextAreaElement).value = job.description || '';
+      (document.getElementById('form-requirements') as HTMLTextAreaElement).value = (job.requirements || []).join('\n');
+      (document.getElementById('form-country') as HTMLInputElement).value = job.country || '';
+      (document.getElementById('form-location') as HTMLInputElement).value = job.location || '';
+      (document.getElementById('form-salary') as HTMLInputElement).value = job.salary_amount || '';
+      (document.getElementById('form-currency') as HTMLInputElement).value = job.salary_currency || '';
+      (document.getElementById('form-salary-label') as HTMLInputElement).value = job.salary_label || '';
+      (document.getElementById('form-contract') as HTMLInputElement).value = job.contract_type || '';
+      (document.getElementById('form-status') as HTMLSelectElement).value = job.status || 'draft';
+    }
+
+    function openEdit(jobId: string) {
+      const job = allJobs.find(j => j.id === jobId);
+      if (!job) return;
+      document.getElementById('modal-title')!.textContent = 'Modifier le poste';
+      document.getElementById('btn-submit')!.textContent = 'Enregistrer';
+      fillForm(job);
+      modal.showModal();
+    }
+
+    function openDuplicate(jobId: string) {
+      const job = allJobs.find(j => j.id === jobId);
+      if (!job) return;
+      document.getElementById('modal-title')!.textContent = 'Dupliquer le poste';
+      document.getElementById('btn-submit')!.textContent = 'Créer';
+      fillForm({ ...job, id: '', country: '', salary_amount: '', salary_currency: '', salary_label: '' });
+      modal.showModal();
+    }
+
+    // Create button
+    document.getElementById('btn-create')!.addEventListener('click', () => {
+      document.getElementById('modal-title')!.textContent = 'Nouveau poste';
+      document.getElementById('btn-submit')!.textContent = 'Créer';
+      resetForm();
+      modal.showModal();
+    });
+
+    // Cancel button
+    document.getElementById('btn-cancel')!.addEventListener('click', () => modal.close());
+
+    // Form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = (document.getElementById('form-id') as HTMLInputElement).value;
+      const reqText = (document.getElementById('form-requirements') as HTMLTextAreaElement).value;
+
+      const payload = {
+        title: (document.getElementById('form-title') as HTMLInputElement).value,
+        description: (document.getElementById('form-description') as HTMLTextAreaElement).value,
+        requirements: reqText ? reqText.split('\n').map(r => r.trim()).filter(Boolean) : [],
+        country: (document.getElementById('form-country') as HTMLInputElement).value.toUpperCase(),
+        location: (document.getElementById('form-location') as HTMLInputElement).value,
+        salary_amount: parseFloat((document.getElementById('form-salary') as HTMLInputElement).value) || null,
+        salary_currency: (document.getElementById('form-currency') as HTMLInputElement).value.toUpperCase(),
+        salary_label: (document.getElementById('form-salary-label') as HTMLInputElement).value,
+        contract_type: (document.getElementById('form-contract') as HTMLInputElement).value,
+        status: (document.getElementById('form-status') as HTMLSelectElement).value,
+      };
+
+      let error;
+      if (id) {
+        ({ error } = await supabase.from('jobs').update(payload).eq('id', id));
+      } else {
+        ({ error } = await supabase.from('jobs').insert(payload));
+      }
+
+      if (error) {
+        alert('Erreur: ' + error.message);
+      } else {
+        modal.close();
+        loadJobs();
+      }
+    });
+
+    loadJobs();
+  </script>
+</AdminLayout>

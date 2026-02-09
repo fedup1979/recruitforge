@@ -366,7 +366,7 @@
       "id": "S4-004",
       "title": "Create admin candidate detail page",
       "priority": 27,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/candidates/[id] page",
         "Candidate profile info",
@@ -381,7 +381,7 @@
       "id": "S4-005",
       "title": "Create admin jobs management",
       "priority": 28,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/jobs page",
         "List of all jobs with status, grouped by title (showing country variants)",
