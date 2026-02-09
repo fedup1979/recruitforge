@@ -21,16 +21,19 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can read own profile"
+DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
+CREATE POLICY "Users can read own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Users can update own profile"
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
-CREATE POLICY IF NOT EXISTS "Admins can read all profiles"
+DROP POLICY IF EXISTS "Admins can read all profiles" ON profiles;
+CREATE POLICY "Admins can read all profiles"
   ON profiles FOR SELECT
   USING (
     EXISTS (
@@ -93,11 +96,13 @@ CREATE TABLE IF NOT EXISTS jobs (
 
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Anyone can read open jobs"
+DROP POLICY IF EXISTS "Anyone can read open jobs" ON jobs;
+CREATE POLICY "Anyone can read open jobs"
   ON jobs FOR SELECT
   USING (status = 'open');
 
-CREATE POLICY IF NOT EXISTS "Admins can manage all jobs"
+DROP POLICY IF EXISTS "Admins can manage all jobs" ON jobs;
+CREATE POLICY "Admins can manage all jobs"
   ON jobs FOR ALL
   USING (
     EXISTS (
@@ -123,15 +128,18 @@ CREATE TABLE IF NOT EXISTS applications (
 
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Candidates can read own applications"
+DROP POLICY IF EXISTS "Candidates can read own applications" ON applications;
+CREATE POLICY "Candidates can read own applications"
   ON applications FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Candidates can create applications"
+DROP POLICY IF EXISTS "Candidates can create applications" ON applications;
+CREATE POLICY "Candidates can create applications"
   ON applications FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Admins can read all applications"
+DROP POLICY IF EXISTS "Admins can read all applications" ON applications;
+CREATE POLICY "Admins can read all applications"
   ON applications FOR SELECT
   USING (
     EXISTS (
@@ -139,7 +147,8 @@ CREATE POLICY IF NOT EXISTS "Admins can read all applications"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Admins can update all applications"
+DROP POLICY IF EXISTS "Admins can update all applications" ON applications;
+CREATE POLICY "Admins can update all applications"
   ON applications FOR UPDATE
   USING (
     EXISTS (
@@ -161,21 +170,24 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('candidates', 'candidates', false)
 ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY IF NOT EXISTS "Users can upload to own folder"
+DROP POLICY IF EXISTS "Users can upload to own folder" ON storage.objects;
+CREATE POLICY "Users can upload to own folder"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'candidates'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
-CREATE POLICY IF NOT EXISTS "Users can read own files"
+DROP POLICY IF EXISTS "Users can read own files" ON storage.objects;
+CREATE POLICY "Users can read own files"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'candidates'
     AND (storage.foldername(name))[1] = auth.uid()::text
   );
 
-CREATE POLICY IF NOT EXISTS "Admins can read all candidate files"
+DROP POLICY IF EXISTS "Admins can read all candidate files" ON storage.objects;
+CREATE POLICY "Admins can read all candidate files"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'candidates'
@@ -203,7 +215,8 @@ CREATE TABLE IF NOT EXISTS test_results (
 
 ALTER TABLE test_results ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Candidates can read own test results"
+DROP POLICY IF EXISTS "Candidates can read own test results" ON test_results;
+CREATE POLICY "Candidates can read own test results"
   ON test_results FOR SELECT
   USING (
     EXISTS (
@@ -213,7 +226,8 @@ CREATE POLICY IF NOT EXISTS "Candidates can read own test results"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Candidates can create own test results"
+DROP POLICY IF EXISTS "Candidates can create own test results" ON test_results;
+CREATE POLICY "Candidates can create own test results"
   ON test_results FOR INSERT
   WITH CHECK (
     EXISTS (
@@ -223,7 +237,8 @@ CREATE POLICY IF NOT EXISTS "Candidates can create own test results"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Candidates can update own test results"
+DROP POLICY IF EXISTS "Candidates can update own test results" ON test_results;
+CREATE POLICY "Candidates can update own test results"
   ON test_results FOR UPDATE
   USING (
     EXISTS (
@@ -233,7 +248,8 @@ CREATE POLICY IF NOT EXISTS "Candidates can update own test results"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Admins can read all test results"
+DROP POLICY IF EXISTS "Admins can read all test results" ON test_results;
+CREATE POLICY "Admins can read all test results"
   ON test_results FOR SELECT
   USING (
     EXISTS (
@@ -241,7 +257,8 @@ CREATE POLICY IF NOT EXISTS "Admins can read all test results"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Admins can update all test results"
+DROP POLICY IF EXISTS "Admins can update all test results" ON test_results;
+CREATE POLICY "Admins can update all test results"
   ON test_results FOR UPDATE
   USING (
     EXISTS (
@@ -265,15 +282,18 @@ CREATE TABLE IF NOT EXISTS consents (
 
 ALTER TABLE consents ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can read own consents"
+DROP POLICY IF EXISTS "Users can read own consents" ON consents;
+CREATE POLICY "Users can read own consents"
   ON consents FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can create own consents"
+DROP POLICY IF EXISTS "Users can create own consents" ON consents;
+CREATE POLICY "Users can create own consents"
   ON consents FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Admins can read all consents"
+DROP POLICY IF EXISTS "Admins can read all consents" ON consents;
+CREATE POLICY "Admins can read all consents"
   ON consents FOR SELECT
   USING (
     EXISTS (
@@ -307,7 +327,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_test_results_app_type
 -- 010: EMAIL NOTIFICATION TRIGGERS (skip pg_net if not available)
 -- ============================================================================
 
--- pg_net may not be available on all plans, so wrap in exception handler
 DO $$
 BEGIN
   CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
@@ -365,13 +384,6 @@ INSERT INTO jobs (title, description, requirements, country, salary_amount, sala
 );
 
 -- ============================================================================
--- ADMIN ROLE: Set francois.dupuis@essr.ch as admin
--- (Will only work if the user has already signed up)
--- ============================================================================
-
-UPDATE profiles SET role = 'admin' WHERE email = 'francois.dupuis@essr.ch';
-
--- ============================================================================
 -- BACKFILL: Create profiles for existing auth users who don't have one yet
 -- ============================================================================
 
@@ -384,5 +396,8 @@ FROM auth.users u
 WHERE NOT EXISTS (SELECT 1 FROM profiles p WHERE p.id = u.id)
 ON CONFLICT (id) DO NOTHING;
 
--- Re-apply admin role after backfill
+-- ============================================================================
+-- ADMIN ROLE: Set francois.dupuis@essr.ch as admin
+-- ============================================================================
+
 UPDATE profiles SET role = 'admin' WHERE email = 'francois.dupuis@essr.ch';
