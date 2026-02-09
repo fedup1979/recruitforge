@@ -21,6 +21,15 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- is_admin() — SECURITY DEFINER function that checks admin role without
+-- triggering RLS policies on profiles (avoids infinite recursion).
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile"
   ON profiles FOR SELECT
@@ -35,11 +44,7 @@ CREATE POLICY "Users can update own profile"
 DROP POLICY IF EXISTS "Admins can read all profiles" ON profiles;
 CREATE POLICY "Admins can read all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
@@ -104,11 +109,7 @@ CREATE POLICY "Anyone can read open jobs"
 DROP POLICY IF EXISTS "Admins can manage all jobs" ON jobs;
 CREATE POLICY "Admins can manage all jobs"
   ON jobs FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- ============================================================================
 -- 003: CREATE APPLICATIONS
@@ -141,20 +142,12 @@ CREATE POLICY "Candidates can create applications"
 DROP POLICY IF EXISTS "Admins can read all applications" ON applications;
 CREATE POLICY "Admins can read all applications"
   ON applications FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 DROP POLICY IF EXISTS "Admins can update all applications" ON applications;
 CREATE POLICY "Admins can update all applications"
   ON applications FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 DROP TRIGGER IF EXISTS applications_updated_at ON applications;
 CREATE TRIGGER applications_updated_at
@@ -191,9 +184,7 @@ CREATE POLICY "Admins can read all candidate files"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'candidates'
-    AND EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND is_admin()
   );
 
 -- ============================================================================
@@ -251,20 +242,12 @@ CREATE POLICY "Candidates can update own test results"
 DROP POLICY IF EXISTS "Admins can read all test results" ON test_results;
 CREATE POLICY "Admins can read all test results"
   ON test_results FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 DROP POLICY IF EXISTS "Admins can update all test results" ON test_results;
 CREATE POLICY "Admins can update all test results"
   ON test_results FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- ============================================================================
 -- 006: CREATE CONSENTS
@@ -295,11 +278,7 @@ CREATE POLICY "Users can create own consents"
 DROP POLICY IF EXISTS "Admins can read all consents" ON consents;
 CREATE POLICY "Admins can read all consents"
   ON consents FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- ============================================================================
 -- 007: TEST ABANDONMENT COLUMNS
