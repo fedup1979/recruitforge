@@ -1,0 +1,110 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+}
+
+const { title = 'Admin — AMBITIA' } = Astro.props;
+---
+
+<html lang="fr" data-theme="ambitia">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-base-100 font-sans">
+    <!-- Admin auth check + redirect (handled client-side) -->
+    <div id="admin-loading" class="flex items-center justify-center min-h-screen">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+    </div>
+
+    <div id="admin-app" class="hidden">
+      <!-- Mobile top bar -->
+      <div class="navbar bg-neutral text-neutral-content lg:hidden">
+        <div class="navbar-start">
+          <label for="admin-drawer" class="btn btn-ghost btn-sm" aria-label="Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+            </svg>
+          </label>
+        </div>
+        <div class="navbar-center">
+          <span class="font-bold">AMBITIA Admin</span>
+        </div>
+        <div class="navbar-end">
+          <button id="admin-logout-mobile" class="btn btn-ghost btn-sm">Déco.</button>
+        </div>
+      </div>
+
+      <div class="drawer lg:drawer-open">
+        <input id="admin-drawer" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content p-4 lg:p-8">
+          <slot />
+        </div>
+        <div class="drawer-side z-40">
+          <label for="admin-drawer" aria-label="Fermer" class="drawer-overlay"></label>
+          <aside class="bg-neutral text-neutral-content w-64 min-h-full p-4">
+            <div class="mb-8">
+              <a href="/admin" class="text-xl font-bold">AMBITIA</a>
+              <p class="text-xs opacity-60 mt-1">Administration</p>
+            </div>
+            <ul class="menu">
+              <li><a href="/admin">Dashboard</a></li>
+              <li><a href="/admin/candidates">Candidats</a></li>
+              <li><a href="/admin/jobs">Postes</a></li>
+              <li><a href="/admin/pool">Vivier</a></li>
+              <li><a href="/admin/stats">Statistiques</a></li>
+            </ul>
+            <div class="mt-auto pt-8">
+              <a href="/" class="btn btn-ghost btn-sm w-full justify-start opacity-60">Retour au site</a>
+              <button id="admin-logout" class="btn btn-ghost btn-sm w-full justify-start opacity-60 mt-1">Déconnexion</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      import { createClient } from '@supabase/supabase-js';
+      const supabase = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      );
+
+      async function checkAdmin() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = '/login'; return; }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!profile || profile.role !== 'admin') {
+          window.location.href = '/dashboard';
+          return;
+        }
+
+        document.getElementById('admin-loading')?.classList.add('hidden');
+        document.getElementById('admin-app')?.classList.remove('hidden');
+      }
+
+      document.querySelectorAll('#admin-logout, #admin-logout-mobile').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/login';
+        });
+      });
+
+      checkAdmin();
+    </script>
+  </body>
+</html>

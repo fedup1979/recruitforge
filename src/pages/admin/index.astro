@@ -1,0 +1,129 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Dashboard — AMBITIA Admin">
+  <h1 class="text-2xl font-bold text-base-content mb-6">Dashboard</h1>
+
+  <!-- Stats cards (populated by JS) -->
+  <div id="stats-loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <div id="stats-content" class="hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Candidats total</div>
+        <div class="stat-value text-primary" id="stat-total">0</div>
+      </div>
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">En attente de review</div>
+        <div class="stat-value text-warning" id="stat-pending">0</div>
+      </div>
+      <div class="stat bg-base-200 rounded-box">
+        <div class="stat-title">Embauchés ce mois</div>
+        <div class="stat-value text-success" id="stat-hired">0</div>
+      </div>
+    </div>
+
+    <!-- Recent applications -->
+    <h2 class="text-lg font-semibold text-base-content mb-4">Candidatures récentes</h2>
+    <div id="recent-apps" class="space-y-2">
+      <!-- Populated by JS -->
+    </div>
+    <div id="no-apps" class="text-center py-8 text-base-content/50 hidden">
+      Aucune candidature pour le moment.
+    </div>
+
+    <!-- Quick links -->
+    <div class="divider mt-8"></div>
+    <h2 class="text-lg font-semibold text-base-content mb-4">Actions rapides</h2>
+    <div class="flex flex-wrap gap-3">
+      <a href="/admin/candidates" class="btn btn-outline btn-sm">Voir tous les candidats</a>
+      <a href="/admin/jobs" class="btn btn-outline btn-sm">Gérer les postes</a>
+      <a href="/admin/pool" class="btn btn-outline btn-sm">Consulter le vivier</a>
+    </div>
+  </div>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    async function loadStats() {
+      // Total candidates
+      const { count: totalCandidates } = await supabase
+        .from('applications')
+        .select('*', { count: 'exact', head: true });
+
+      // Pending review
+      const { count: pendingReview } = await supabase
+        .from('applications')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['pending', 'testing']);
+
+      // Hired this month
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count: hiredMonth } = await supabase
+        .from('applications')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'hired')
+        .gte('updated_at', firstOfMonth);
+
+      document.getElementById('stat-total')!.textContent = String(totalCandidates || 0);
+      document.getElementById('stat-pending')!.textContent = String(pendingReview || 0);
+      document.getElementById('stat-hired')!.textContent = String(hiredMonth || 0);
+
+      // Recent applications
+      const { data: recentApps } = await supabase
+        .from('applications')
+        .select('id, status, created_at, profiles(full_name, email), jobs(title, country)')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const recentDiv = document.getElementById('recent-apps')!;
+      const noAppsDiv = document.getElementById('no-apps')!;
+
+      if (!recentApps || recentApps.length === 0) {
+        noAppsDiv.classList.remove('hidden');
+      } else {
+        const statusLabels: Record<string, { label: string; class: string }> = {
+          pending: { label: 'En attente', class: 'badge-warning' },
+          testing: { label: 'Tests', class: 'badge-info' },
+          review: { label: 'Review', class: 'badge-secondary' },
+          interview: { label: 'Entretien', class: 'badge-accent' },
+          hired: { label: 'Embauché', class: 'badge-success' },
+          rejected: { label: 'Refusé', class: 'badge-error' },
+          pool: { label: 'Vivier', class: 'badge-neutral' },
+        };
+
+        recentDiv.innerHTML = recentApps.map((app: any) => {
+          const profile = app.profiles;
+          const job = app.jobs;
+          const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
+          const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+          return `
+            <div class="flex items-center justify-between bg-base-200 rounded-box p-3">
+              <div>
+                <span class="font-medium">${profile?.full_name || profile?.email || 'Candidat'}</span>
+                <span class="text-sm text-base-content/50 ml-2">${job?.title || ''} (${job?.country || ''})</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-base-content/40">${date}</span>
+                <span class="badge badge-sm ${status.class}">${status.label}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('stats-loading')!.classList.add('hidden');
+      document.getElementById('stats-content')!.classList.remove('hidden');
+    }
+
+    loadStats();
+  </script>
+</AdminLayout>
