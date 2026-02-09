@@ -265,3 +265,31 @@
   - Supabase `resetPasswordForEmail` needs `redirectTo` option for the reset link
   - GitHub Pages uses 404.html at root — Astro generates it from src/pages/404.astro
 ---
+
+## 2026-02-09 - Post-PRD Enhancements (all 47 stories complete)
+- **CSS Cascade Layers fix**: `.hidden { display: none !important; }` in global.css (DaisyUI v5 layers override Tailwind)
+- **Admin navigation**: Added Admin link in navbar for admin users (replaces Dashboard link)
+- **Scoring composite**: Big Five (40%) + Quiz (30%) + Profile (30%), auto-reject < 40, auto-review >= 40
+- **Data fixes**: test_type `big_five` (not `bigfive`), knockout keys `french_level`/`call_experience`
+- **result_data JSONB column** added to test_results + admin INSERT policy
+- **Big Five per-trait scores** saved in result_data (E/A/C/N/O breakdown)
+- **Composite score banner** on admin candidate detail with Fast-track/Review/Rejected verdict
+- **Vapi roleplay embed**: iframe instead of new tab
+- **Chart.js stats**: Funnel bar chart, doughnut status distribution, timeline line chart
+- **Schema.org JobPosting**: JSON-LD structured data on /jobs/detail
+- **OG meta**: og:url, og:site_name, canonical URL in BaseLayout
+- **Email templates**: 10 templates (welcome, application_received, status_*, test_reminder, roleplay_invitation)
+- **Admin email on status change**: Auto-sends appropriate email when admin changes candidate status
+- **Vapi webhook**: New edge function to receive call recordings/transcripts
+- **Signup welcome email**: Fires on account creation
+- **Apply confirmation email**: Fires on application submission
+- **Dashboard action CTAs**: Status-specific actions (tests link, congrats, other jobs)
+- Files: 15+ files modified/created across layouts, pages, edge functions, migrations
+- Commits: 8 total (fix: CSS, admin error handling, nav, data bugs, scoring, roleplay, stats+SEO, emails+dashboard)
+- **Learnings:**
+  - DaisyUI 5 CSS cascade layers: `.alert { display: grid }` overrides `.hidden` — always add `!important` workaround
+  - Chart.js 4.x via CDN: use `<script is:inline>` in Astro, access via `(window as any).Chart`
+  - Schema.org JSON-LD must be injected via JS on static sites with client-side data fetching
+  - Edge function email logging: wrap in `.catch()` to not block the response if DB logging fails
+  - Vapi webhook events: `end-of-call-report` has recording/transcript, `status-update` has call lifecycle
+---

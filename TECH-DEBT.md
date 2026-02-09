@@ -16,6 +16,12 @@
 - Le domaine `ambitia.io` doit être vérifié dans le dashboard Resend pour que les emails transactionnels arrivent (pas en spam)
 - Configuration DNS requise : SPF, DKIM, DMARC
 - Action : Resend Dashboard > Domains > Add domain > Copier les records DNS > Ajouter dans GoDaddy
+- **NOTE** : Les templates email sont prêts (welcome, application_received, status_*, test_reminder, roleplay_invitation)
+
+### Déployer les Edge Functions sur Supabase
+- 3 Edge Functions prêtes dans le repo : `send-email`, `create-vapi-call`, `vapi-webhook`
+- À déployer via : `supabase functions deploy send-email` (etc.) ou depuis le dashboard Supabase
+- Le webhook Vapi doit être configuré dans le dashboard Vapi : URL = `https://gdvdvjymkakuoepyhajk.supabase.co/functions/v1/vapi-webhook`
 
 ---
 
@@ -25,11 +31,6 @@
 - Les Edge Functions Supabase (send-email, create-vapi-call) n'ont pas de rate limiting
 - Risque : abus possible sur les endpoints publics
 - Solution : ajouter un rate limiter via Redis ou un compteur Supabase
-
-### Vrais graphiques Chart.js dans admin/stats
-- Les stats admin utilisent actuellement des divs HTML pour les barres de progression
-- Remplacer par des vrais graphiques Chart.js ou Recharts pour un meilleur rendu
-- Pages concernées : `/admin/stats`
 
 ### Tests automatisés
 - Aucun test unitaire ou E2E actuellement
@@ -41,7 +42,6 @@
 ## Priorité basse
 
 ### Optimisation images / assets
-- Ajouter un vrai logo AMBITIA (SVG) au lieu du favicon par défaut
 - Optimiser les images si ajoutées (astro:image)
 
 ### PWA / Offline
@@ -53,7 +53,12 @@
 - Audit WCAG à faire
 - Vérifier les contrastes, les labels ARIA, la navigation clavier
 
-### SEO avancé
-- Sitemap.xml
-- Schema.org JobPosting structured data sur les pages d'offres
-- Open Graph images personnalisées
+---
+
+## Résolu (cette session)
+
+- ~~Vrais graphiques Chart.js dans admin/stats~~ → Funnel bar, doughnut, timeline line chart avec Chart.js 4.4
+- ~~Schema.org JobPosting structured data~~ → JSON-LD injecté sur /jobs/detail
+- ~~Open Graph meta tags~~ → og:url, og:site_name, canonical URL dans BaseLayout
+- ~~Sitemap.xml~~ → @astrojs/sitemap configuré
+- ~~Favicon custom~~ → SVG AMBITIA branded
