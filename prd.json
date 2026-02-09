@@ -629,7 +629,7 @@
       "id": "S6-006",
       "title": "Setup GitHub Pages deployment",
       "priority": 46,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "GitHub Actions workflow for build and deploy",
         "Astro configured for static output",

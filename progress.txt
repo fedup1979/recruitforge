@@ -184,3 +184,40 @@
   - DaisyUI `drawer` with `lg:drawer-open` gives permanent sidebar on desktop, overlay on mobile
   - Supabase `select('*', { count: 'exact', head: true })` returns count without data
 ---
+
+## 2026-02-09 - Sprint 4 Summary (S4-002 to S4-012)
+- S4-002: Admin dashboard (stats + recent apps) — already built in S4-001
+- S4-003: Admin candidates list with filters (job, status, country), search, sorting, pagination
+- S4-004: Admin candidate detail page with profile info, test results, CV download, status change, notes
+- S4-005: Admin jobs management with CRUD, grouped by title, status change, duplicate for country
+- S4-006: Human scoring interface (6 criteria from SCORECARD, 1-5 each, /30 total, upsert)
+- S4-007: Vapi integration edge function with 2 scenario prompts (easy/medium)
+- S4-008: Roleplay candidate interface with consent modal, call timer, Vapi web call
+- S4-009: Audio player + transcript display on admin candidate detail
+- S4-010: Bulk actions (reject/pool/advance) with checkboxes, confirmation modal
+- S4-011: Kanban view toggle with columns per status, card badges
+- S4-012: CSV export with BOM for UTF-8 French characters
+- **Learnings for future iterations:**
+  - Static Astro can't use dynamic [id] routes for DB-driven IDs; use query params instead (?id=xxx)
+  - Supabase `upsert` needs unique index on conflict columns
+  - DaisyUI `dialog` element with `showModal()` is clean for modals (no JS framework needed)
+  - DaisyUI `rating` component uses radio inputs for star ratings
+  - CSV export: BOM (\uFEFF) is needed for Excel to read UTF-8 French chars
+  - Edge functions: use Deno imports from esm.sh for npm packages
+  - Bulk operations: iterate with individual updates rather than batched for error tracking
+---
+
+## 2026-02-09 - S6-006
+- Setup GitHub Pages deployment with GitHub Actions workflow
+- Created `.github/workflows/deploy.yml`: build on push to main, deploy via actions/deploy-pages@v4
+- Added `public/CNAME` with `ambitia.io` for custom domain support
+- `astro.config.mjs` already had `site: 'https://ambitia.io'` configured
+- Workflow passes `PUBLIC_*` env vars from GitHub Secrets during build
+- Files changed: .github/workflows/deploy.yml (new), public/CNAME (new), astro.config.mjs (site field)
+- **Learnings for future iterations:**
+  - Astro defaults to `output: 'static'` — no explicit config needed for GitHub Pages
+  - CNAME file goes in `public/` so Astro copies it to `dist/` during build
+  - GitHub Pages needs `permissions: pages: write, id-token: write` in workflow
+  - Use `actions/upload-pages-artifact@v3` + `actions/deploy-pages@v4` for Pages deployment
+  - Concurrency group prevents overlapping deployments
+---
