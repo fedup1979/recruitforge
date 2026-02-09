@@ -233,7 +233,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       tbody.querySelectorAll('tr[data-app-id]').forEach(row => {
         row.addEventListener('click', () => {
           const appId = row.getAttribute('data-app-id');
-          window.location.href = `/admin/candidates/${appId}`;
+          window.location.href = `/admin/candidates/detail?id=${appId}`;
         });
       });
 

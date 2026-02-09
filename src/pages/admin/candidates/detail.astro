@@ -1,0 +1,293 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Détail candidat — AMBITIA Admin">
+  <!-- Loading -->
+  <div id="loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Not found -->
+  <div id="not-found" class="text-center py-16 hidden">
+    <h2 class="text-xl font-semibold text-base-content/50 mb-2">Candidature introuvable</h2>
+    <a href="/admin/candidates" class="btn btn-primary btn-sm mt-4">Retour à la liste</a>
+  </div>
+
+  <!-- Detail content -->
+  <div id="detail" class="hidden">
+    <div class="flex items-center gap-2 mb-6">
+      <a href="/admin/candidates" class="btn btn-ghost btn-sm">← Retour</a>
+    </div>
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-base-content" id="candidate-name">—</h1>
+        <p class="text-base-content/60" id="candidate-email">—</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="status-select" class="select select-bordered select-sm">
+          <option value="pending">En attente</option>
+          <option value="testing">Tests</option>
+          <option value="review">Review</option>
+          <option value="interview">Entretien</option>
+          <option value="hired">Embauché</option>
+          <option value="rejected">Refusé</option>
+          <option value="pool">Vivier</option>
+        </select>
+        <button id="save-status" class="btn btn-primary btn-sm">Sauvegarder</button>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Profile info -->
+      <div class="card bg-base-200">
+        <div class="card-body">
+          <h2 class="card-title text-base">Profil</h2>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-base-content/60">Téléphone</span><span id="info-phone">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Pays</span><span id="info-country">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Rôle</span><span id="info-role">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Inscription</span><span id="info-created">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application info -->
+      <div class="card bg-base-200">
+        <div class="card-body">
+          <h2 class="card-title text-base">Candidature</h2>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span class="text-base-content/60">Poste</span><span id="info-job">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Pays du poste</span><span id="info-job-country">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Date de candidature</span><span id="info-app-date">—</span></div>
+            <div class="flex justify-between"><span class="text-base-content/60">Statut</span><span id="info-status" class="badge badge-sm">—</span></div>
+          </div>
+          <div class="mt-3" id="cv-container">
+            <!-- CV link if available -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Knockout answers -->
+    <div class="card bg-base-200 mb-6" id="knockout-section">
+      <div class="card-body">
+        <h2 class="card-title text-base">Réponses de présélection</h2>
+        <div id="knockout-answers" class="space-y-2 text-sm">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Test results -->
+    <div class="card bg-base-200 mb-6" id="tests-section">
+      <div class="card-body">
+        <h2 class="card-title text-base">Résultats des tests</h2>
+        <div id="test-results" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
+        <div id="no-tests" class="text-base-content/50 text-sm hidden">Aucun test complété.</div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card bg-base-200 mb-6">
+      <div class="card-body">
+        <h2 class="card-title text-base">Notes internes</h2>
+        <textarea id="notes-input" class="textarea textarea-bordered w-full" rows="4" placeholder="Ajouter des notes sur ce candidat…"></textarea>
+        <div class="card-actions justify-end mt-2">
+          <button id="save-notes" class="btn btn-sm btn-outline">Enregistrer les notes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const params = new URLSearchParams(window.location.search);
+    const appId = params.get('id');
+
+    const statusLabels: Record<string, { label: string; class: string }> = {
+      pending: { label: 'En attente', class: 'badge-warning' },
+      testing: { label: 'Tests', class: 'badge-info' },
+      review: { label: 'Review', class: 'badge-secondary' },
+      interview: { label: 'Entretien', class: 'badge-accent' },
+      hired: { label: 'Embauché', class: 'badge-success' },
+      rejected: { label: 'Refusé', class: 'badge-error' },
+      pool: { label: 'Vivier', class: 'badge-neutral' },
+    };
+
+    async function loadDetail() {
+      if (!appId) {
+        document.getElementById('loading')!.classList.add('hidden');
+        document.getElementById('not-found')!.classList.remove('hidden');
+        return;
+      }
+
+      const { data: app, error } = await supabase
+        .from('applications')
+        .select(`
+          id, status, created_at, knockout_answers, admin_notes,
+          profiles(id, full_name, email, phone, country, role, created_at),
+          jobs(id, title, country, salary_label),
+          test_results(test_type, score, result_data, completed_at)
+        `)
+        .eq('id', appId)
+        .single();
+
+      document.getElementById('loading')!.classList.add('hidden');
+
+      if (error || !app) {
+        document.getElementById('not-found')!.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('detail')!.classList.remove('hidden');
+
+      const profile = app.profiles as any;
+      const job = app.jobs as any;
+      const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
+
+      // Header
+      document.getElementById('candidate-name')!.textContent = profile?.full_name || 'Candidat';
+      document.getElementById('candidate-email')!.textContent = profile?.email || '';
+      (document.getElementById('status-select') as HTMLSelectElement).value = app.status;
+
+      // Profile info
+      document.getElementById('info-phone')!.textContent = profile?.phone || '—';
+      document.getElementById('info-country')!.textContent = profile?.country || '—';
+      document.getElementById('info-role')!.textContent = profile?.role || '—';
+      document.getElementById('info-created')!.textContent = profile?.created_at
+        ? new Date(profile.created_at).toLocaleDateString('fr-FR')
+        : '—';
+
+      // Application info
+      document.getElementById('info-job')!.textContent = job?.title || '—';
+      document.getElementById('info-job-country')!.textContent = job?.country || '—';
+      document.getElementById('info-app-date')!.textContent = new Date(app.created_at).toLocaleDateString('fr-FR');
+      const statusBadge = document.getElementById('info-status')!;
+      statusBadge.textContent = status.label;
+      statusBadge.className = `badge badge-sm ${status.class}`;
+
+      // CV download
+      const cvContainer = document.getElementById('cv-container')!;
+      if (profile?.id) {
+        const { data: files } = await supabase.storage
+          .from('candidates')
+          .list(`${profile.id}/cv`);
+
+        if (files && files.length > 0) {
+          const { data: urlData } = await supabase.storage
+            .from('candidates')
+            .createSignedUrl(`${profile.id}/cv/${files[0].name}`, 3600);
+
+          if (urlData?.signedUrl) {
+            cvContainer.innerHTML = `<a href="${urlData.signedUrl}" target="_blank" class="btn btn-outline btn-sm">📄 Télécharger le CV</a>`;
+          }
+        }
+      }
+
+      // Knockout answers
+      const knockoutDiv = document.getElementById('knockout-answers')!;
+      if (app.knockout_answers && typeof app.knockout_answers === 'object') {
+        const answers = app.knockout_answers as Record<string, any>;
+        const questionLabels: Record<string, string> = {
+          availability: 'Disponibilité immédiate',
+          internet: 'Connexion internet stable',
+          french: 'Niveau de français',
+          experience: 'Expérience en appels',
+        };
+        knockoutDiv.innerHTML = Object.entries(answers).map(([key, val]) =>
+          `<div class="flex justify-between"><span class="text-base-content/60">${questionLabels[key] || key}</span><span class="font-medium">${val}</span></div>`
+        ).join('');
+      } else {
+        document.getElementById('knockout-section')!.classList.add('hidden');
+      }
+
+      // Test results
+      const testResults = (app.test_results || []) as any[];
+      const testDiv = document.getElementById('test-results')!;
+      const noTests = document.getElementById('no-tests')!;
+
+      if (testResults.length === 0) {
+        noTests.classList.remove('hidden');
+      } else {
+        testDiv.innerHTML = testResults.map((t: any) => {
+          const typeLabel = t.test_type === 'bigfive' ? 'Big Five (TIPI-10)' : t.test_type === 'quiz' ? 'Quiz ESSR' : t.test_type;
+          const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
+          let details = '';
+
+          if (t.test_type === 'bigfive' && t.result_data) {
+            const traits = t.result_data as Record<string, number>;
+            details = `<div class="grid grid-cols-5 gap-2 mt-2">${
+              Object.entries(traits).map(([trait, score]) =>
+                `<div class="text-center"><div class="text-xs text-base-content/50">${trait}</div><div class="font-bold text-sm">${score}</div></div>`
+              ).join('')
+            }</div>`;
+          }
+
+          return `
+            <div class="bg-base-100 rounded-box p-3">
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-sm">${typeLabel}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-base-content/50">${date}</span>
+                  ${t.score !== null ? `<span class="badge badge-sm badge-primary">${t.score}%</span>` : ''}
+                </div>
+              </div>
+              ${details}
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Notes
+      const notesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
+      notesInput.value = (app as any).admin_notes || '';
+
+      // Save status handler
+      document.getElementById('save-status')!.addEventListener('click', async () => {
+        const newStatus = (document.getElementById('status-select') as HTMLSelectElement).value;
+        const { error: updateError } = await supabase
+          .from('applications')
+          .update({ status: newStatus })
+          .eq('id', appId);
+
+        if (updateError) {
+          alert('Erreur: ' + updateError.message);
+        } else {
+          const s = statusLabels[newStatus] || { label: newStatus, class: 'badge-ghost' };
+          const badge = document.getElementById('info-status')!;
+          badge.textContent = s.label;
+          badge.className = `badge badge-sm ${s.class}`;
+          alert('Statut mis à jour.');
+        }
+      });
+
+      // Save notes handler
+      document.getElementById('save-notes')!.addEventListener('click', async () => {
+        const notes = notesInput.value;
+        const { error: notesError } = await supabase
+          .from('applications')
+          .update({ admin_notes: notes })
+          .eq('id', appId);
+
+        if (notesError) {
+          alert('Erreur: ' + notesError.message);
+        } else {
+          alert('Notes enregistrées.');
+        }
+      });
+    }
+
+    loadDetail();
+  </script>
+</AdminLayout>

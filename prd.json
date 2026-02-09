@@ -347,7 +347,7 @@
       "id": "S4-003",
       "title": "Create admin candidates list with advanced filtering",
       "priority": 26,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/candidates page",
         "Table with: name, email, country, job, status, date, score",
