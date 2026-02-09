@@ -563,7 +563,7 @@
       "id": "S6-001",
       "title": "Setup Sentry error monitoring",
       "priority": 41,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Sentry SDK installed and configured",
         "Errors automatically reported",
