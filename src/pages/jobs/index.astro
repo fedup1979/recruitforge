@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JobCard from '../../components/JobCard.astro';
+import { jobs } from '../../data/jobs';
+
+const openJobs = jobs.filter((j) => j.status === 'open');
+const countries = [...new Set(openJobs.map((j) => j.country))];
+---
+
+<BaseLayout title="Postes ouverts — AMBITIA" description="Découvrez nos offres d'emploi en télétravail. Postes ouverts à Madagascar, au Maroc et en Afrique francophone.">
+  <section class="py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-2">Postes ouverts</h1>
+      <p class="text-base-content/70 mb-8">Trouvez le poste qui vous correspond et postulez en quelques clics.</p>
+
+      <!-- Country filter -->
+      <div class="flex flex-wrap gap-2 mb-8" id="country-filter">
+        <button class="btn btn-sm btn-primary filter-btn" data-country="all">Tous</button>
+        {countries.map((code) => {
+          const job = openJobs.find((j) => j.country === code)!;
+          return (
+            <button class="btn btn-sm btn-outline filter-btn" data-country={code}>
+              {job.countryFlag} {job.countryName}
+            </button>
+          );
+        })}
+      </div>
+
+      <!-- Jobs grid -->
+      {openJobs.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="jobs-grid">
+          {openJobs.map((job) => (
+            <div data-country={job.country}>
+              <JobCard
+                id={job.id}
+                title={job.title}
+                countryFlag={job.countryFlag}
+                countryName={job.countryName}
+                location={job.location}
+                salary_label={job.salary_label}
+                contract_type={job.contract_type}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.64-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          <h2 class="text-xl font-semibold text-base-content/50 mb-2">Aucun poste ouvert pour le moment</h2>
+          <p class="text-base-content/40">Revenez bientôt, de nouvelles offres arrivent régulièrement.</p>
+        </div>
+      )}
+
+      <!-- Empty state for filtered results (hidden by default) -->
+      <div class="text-center py-16 hidden" id="no-results">
+        <p class="text-lg text-base-content/50">Aucun poste disponible pour ce pays.</p>
+        <button class="btn btn-sm btn-primary mt-4 reset-filter">Voir tous les postes</button>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const resetBtns = document.querySelectorAll<HTMLButtonElement>('.reset-filter');
+  const jobCards = document.querySelectorAll<HTMLElement>('#jobs-grid > div');
+  const grid = document.getElementById('jobs-grid');
+  const noResults = document.getElementById('no-results');
+
+  function filterByCountry(country: string) {
+    let visibleCount = 0;
+
+    filterBtns.forEach((btn) => {
+      if (btn.dataset.country === country) {
+        btn.classList.remove('btn-outline');
+        btn.classList.add('btn-primary');
+      } else {
+        btn.classList.add('btn-outline');
+        btn.classList.remove('btn-primary');
+      }
+    });
+
+    jobCards.forEach((card) => {
+      if (country === 'all' || card.dataset.country === country) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    if (grid && noResults) {
+      if (visibleCount === 0) {
+        grid.classList.add('hidden');
+        noResults.classList.remove('hidden');
+      } else {
+        grid.classList.remove('hidden');
+        noResults.classList.add('hidden');
+      }
+    }
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterByCountry(btn.dataset.country || 'all');
+    });
+  });
+
+  resetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterByCountry('all');
+    });
+  });
+</script>
