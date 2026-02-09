@@ -454,7 +454,7 @@
       "id": "S4-010",
       "title": "Add bulk actions to admin candidates list",
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Checkbox selection on each candidate row",
         "Select all checkbox in header",

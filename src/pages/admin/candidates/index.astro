@@ -45,11 +45,34 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 
+  <!-- Bulk actions toolbar -->
+  <div id="bulk-toolbar" class="hidden bg-primary/10 rounded-box p-3 mb-4 flex flex-wrap items-center gap-3">
+    <span class="text-sm font-medium" id="bulk-count">0 sélectionné(s)</span>
+    <button class="btn btn-sm btn-error btn-outline" id="bulk-reject">Rejeter</button>
+    <button class="btn btn-sm btn-neutral btn-outline" id="bulk-pool">Mettre en vivier</button>
+    <button class="btn btn-sm btn-info btn-outline" id="bulk-advance">Avancer à l'étape suivante</button>
+    <button class="btn btn-sm btn-ghost" id="bulk-clear">Désélectionner</button>
+  </div>
+
+  <!-- Bulk confirmation modal -->
+  <dialog id="bulk-modal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg" id="bulk-modal-title">Confirmation</h3>
+      <p class="py-4" id="bulk-modal-text"></p>
+      <div class="modal-action">
+        <button class="btn" id="bulk-modal-cancel">Annuler</button>
+        <button class="btn btn-primary" id="bulk-modal-confirm">Confirmer</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
   <!-- Table -->
   <div id="table-container" class="hidden overflow-x-auto">
     <table class="table table-zebra w-full">
       <thead>
         <tr>
+          <th><input type="checkbox" id="select-all" class="checkbox checkbox-sm" /></th>
           <th>Nom</th>
           <th>Email</th>
           <th>Pays</th>
@@ -217,24 +240,30 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const scoreDisplay = score !== null ? `${score}%` : '—';
 
         return `
-          <tr class="hover cursor-pointer" data-app-id="${app.id}" data-profile-id="${profile?.id || ''}">
-            <td class="font-medium">${profile?.full_name || '—'}</td>
-            <td class="text-sm">${profile?.email || '—'}</td>
-            <td>${profile?.country || '—'}</td>
-            <td>${job?.title || '—'}</td>
+          <tr class="hover" data-app-id="${app.id}" data-status="${app.status}">
+            <td><input type="checkbox" class="checkbox checkbox-sm row-checkbox" data-app-id="${app.id}" /></td>
+            <td class="font-medium cursor-pointer row-link">${profile?.full_name || '—'}</td>
+            <td class="text-sm cursor-pointer row-link">${profile?.email || '—'}</td>
+            <td class="cursor-pointer row-link">${profile?.country || '—'}</td>
+            <td class="cursor-pointer row-link">${job?.title || '—'}</td>
             <td><span class="badge badge-sm ${status.class}">${status.label}</span></td>
-            <td>${scoreDisplay}</td>
-            <td class="text-sm">${date}</td>
+            <td class="cursor-pointer row-link">${scoreDisplay}</td>
+            <td class="text-sm cursor-pointer row-link">${date}</td>
           </tr>
         `;
       }).join('');
 
-      // Add click handlers
-      tbody.querySelectorAll('tr[data-app-id]').forEach(row => {
-        row.addEventListener('click', () => {
-          const appId = row.getAttribute('data-app-id');
+      // Row click handlers (only on non-checkbox cells)
+      tbody.querySelectorAll('.row-link').forEach(cell => {
+        cell.addEventListener('click', () => {
+          const appId = cell.closest('tr')!.getAttribute('data-app-id');
           window.location.href = `/admin/candidates/detail?id=${appId}`;
         });
+      });
+
+      // Checkbox handlers
+      tbody.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkToolbar);
       });
 
       // Pagination
@@ -261,6 +290,122 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         });
       });
     }
+
+    // Bulk actions
+    function getSelectedIds(): string[] {
+      return Array.from(document.querySelectorAll('.row-checkbox:checked'))
+        .map(cb => (cb as HTMLInputElement).getAttribute('data-app-id')!)
+        .filter(Boolean);
+    }
+
+    function updateBulkToolbar() {
+      const selected = getSelectedIds();
+      const toolbar = document.getElementById('bulk-toolbar')!;
+      const countSpan = document.getElementById('bulk-count')!;
+
+      if (selected.length > 0) {
+        toolbar.classList.remove('hidden');
+        countSpan.textContent = `${selected.length} sélectionné(s)`;
+      } else {
+        toolbar.classList.add('hidden');
+      }
+
+      // Update select-all checkbox
+      const allCheckboxes = document.querySelectorAll('.row-checkbox');
+      const selectAll = document.getElementById('select-all') as HTMLInputElement;
+      selectAll.checked = allCheckboxes.length > 0 && selected.length === allCheckboxes.length;
+    }
+
+    document.getElementById('select-all')!.addEventListener('change', (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        (cb as HTMLInputElement).checked = checked;
+      });
+      updateBulkToolbar();
+    });
+
+    document.getElementById('bulk-clear')!.addEventListener('click', () => {
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        (cb as HTMLInputElement).checked = false;
+      });
+      (document.getElementById('select-all') as HTMLInputElement).checked = false;
+      updateBulkToolbar();
+    });
+
+    const nextStatus: Record<string, string> = {
+      pending: 'testing',
+      testing: 'review',
+      review: 'interview',
+      interview: 'hired',
+    };
+
+    let pendingBulkAction: { ids: string[]; newStatus: string } | null = null;
+
+    function showBulkConfirmation(action: string, ids: string[]) {
+      const modal = document.getElementById('bulk-modal') as HTMLDialogElement;
+      const title = document.getElementById('bulk-modal-title')!;
+      const text = document.getElementById('bulk-modal-text')!;
+
+      if (action === 'reject') {
+        title.textContent = 'Rejeter les candidats';
+        text.textContent = `Êtes-vous sûr de vouloir rejeter ${ids.length} candidat(s) ?`;
+        pendingBulkAction = { ids, newStatus: 'rejected' };
+      } else if (action === 'pool') {
+        title.textContent = 'Mettre en vivier';
+        text.textContent = `Êtes-vous sûr de vouloir mettre ${ids.length} candidat(s) en vivier ?`;
+        pendingBulkAction = { ids, newStatus: 'pool' };
+      } else if (action === 'advance') {
+        title.textContent = 'Avancer à l\'étape suivante';
+        text.textContent = `Avancer ${ids.length} candidat(s) à l'étape suivante ?`;
+        pendingBulkAction = { ids, newStatus: 'advance' };
+      }
+
+      modal.showModal();
+    }
+
+    document.getElementById('bulk-reject')!.addEventListener('click', () => showBulkConfirmation('reject', getSelectedIds()));
+    document.getElementById('bulk-pool')!.addEventListener('click', () => showBulkConfirmation('pool', getSelectedIds()));
+    document.getElementById('bulk-advance')!.addEventListener('click', () => showBulkConfirmation('advance', getSelectedIds()));
+
+    document.getElementById('bulk-modal-cancel')!.addEventListener('click', () => {
+      (document.getElementById('bulk-modal') as HTMLDialogElement).close();
+      pendingBulkAction = null;
+    });
+
+    document.getElementById('bulk-modal-confirm')!.addEventListener('click', async () => {
+      if (!pendingBulkAction) return;
+      const { ids, newStatus } = pendingBulkAction;
+      let errorCount = 0;
+
+      for (const id of ids) {
+        let status = newStatus;
+        if (newStatus === 'advance') {
+          const row = document.querySelector(`tr[data-app-id="${id}"]`);
+          const currentStatus = row?.getAttribute('data-status') || 'pending';
+          status = nextStatus[currentStatus] || currentStatus;
+        }
+        const { error } = await supabase
+          .from('applications')
+          .update({ status })
+          .eq('id', id);
+        if (error) errorCount++;
+      }
+
+      (document.getElementById('bulk-modal') as HTMLDialogElement).close();
+      pendingBulkAction = null;
+
+      if (errorCount > 0) {
+        alert(`${errorCount} erreur(s) sur ${ids.length} mise(s) à jour.`);
+      } else {
+        alert(`${ids.length} candidat(s) mis à jour.`);
+      }
+
+      // Reload data
+      document.getElementById('table-container')!.classList.add('hidden');
+      document.getElementById('loading')!.classList.remove('hidden');
+      document.getElementById('bulk-toolbar')!.classList.add('hidden');
+      loadData();
+    });
 
     // Event listeners
     document.getElementById('search-input')!.addEventListener('input', applyFilters);
