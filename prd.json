@@ -550,7 +550,7 @@
       "id": "S5-005",
       "title": "Run full RLS test suite",
       "priority": 40,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "All RLS test files pass",
         "Test candidate cannot see other candidates' data",
