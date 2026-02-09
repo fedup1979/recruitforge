@@ -1,0 +1,274 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Candidats — AMBITIA Admin">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold text-base-content">Candidats</h1>
+    <input
+      type="text"
+      id="search-input"
+      placeholder="Rechercher par nom ou email…"
+      class="input input-bordered input-sm w-full sm:w-64"
+    />
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 mb-6">
+    <select id="filter-job" class="select select-bordered select-sm">
+      <option value="">Tous les postes</option>
+    </select>
+    <select id="filter-status" class="select select-bordered select-sm">
+      <option value="">Tous les statuts</option>
+      <option value="pending">En attente</option>
+      <option value="testing">Tests</option>
+      <option value="review">Review</option>
+      <option value="interview">Entretien</option>
+      <option value="hired">Embauché</option>
+      <option value="rejected">Refusé</option>
+      <option value="pool">Vivier</option>
+    </select>
+    <select id="filter-country" class="select select-bordered select-sm">
+      <option value="">Tous les pays</option>
+    </select>
+    <select id="sort-by" class="select select-bordered select-sm">
+      <option value="date-desc">Date (récent)</option>
+      <option value="date-asc">Date (ancien)</option>
+      <option value="score-desc">Score (haut)</option>
+      <option value="score-asc">Score (bas)</option>
+      <option value="country-asc">Pays (A-Z)</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Table -->
+  <div id="table-container" class="hidden overflow-x-auto">
+    <table class="table table-zebra w-full">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Pays</th>
+          <th>Poste</th>
+          <th>Statut</th>
+          <th>Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="candidates-body">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="text-center py-12 text-base-content/50 hidden">
+      Aucun candidat trouvé.
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="flex items-center justify-center gap-2 mt-6">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const PAGE_SIZE = 20;
+    let allApplications: any[] = [];
+    let filteredApps: any[] = [];
+    let currentPage = 1;
+
+    const statusLabels: Record<string, { label: string; class: string }> = {
+      pending: { label: 'En attente', class: 'badge-warning' },
+      testing: { label: 'Tests', class: 'badge-info' },
+      review: { label: 'Review', class: 'badge-secondary' },
+      interview: { label: 'Entretien', class: 'badge-accent' },
+      hired: { label: 'Embauché', class: 'badge-success' },
+      rejected: { label: 'Refusé', class: 'badge-error' },
+      pool: { label: 'Vivier', class: 'badge-neutral' },
+    };
+
+    async function loadData() {
+      const { data: apps } = await supabase
+        .from('applications')
+        .select(`
+          id, status, created_at, knockout_answers,
+          profiles(id, full_name, email, country),
+          jobs(id, title, country),
+          test_results(test_type, score)
+        `)
+        .order('created_at', { ascending: false });
+
+      allApplications = apps || [];
+
+      // Populate job filter
+      const jobs = [...new Set(allApplications.map((a: any) => a.jobs?.title).filter(Boolean))];
+      const jobSelect = document.getElementById('filter-job') as HTMLSelectElement;
+      jobs.forEach(j => {
+        const opt = document.createElement('option');
+        opt.value = j;
+        opt.textContent = j;
+        jobSelect.appendChild(opt);
+      });
+
+      // Populate country filter
+      const countries = [...new Set(allApplications.map((a: any) => a.profiles?.country).filter(Boolean))];
+      const countrySelect = document.getElementById('filter-country') as HTMLSelectElement;
+      countries.sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        countrySelect.appendChild(opt);
+      });
+
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('table-container')!.classList.remove('hidden');
+
+      applyFilters();
+    }
+
+    function getScore(app: any): number | null {
+      if (!app.test_results || app.test_results.length === 0) return null;
+      const quiz = app.test_results.find((t: any) => t.test_type === 'quiz');
+      return quiz?.score ?? null;
+    }
+
+    function applyFilters() {
+      const search = (document.getElementById('search-input') as HTMLInputElement).value.toLowerCase();
+      const jobFilter = (document.getElementById('filter-job') as HTMLSelectElement).value;
+      const statusFilter = (document.getElementById('filter-status') as HTMLSelectElement).value;
+      const countryFilter = (document.getElementById('filter-country') as HTMLSelectElement).value;
+      const sortBy = (document.getElementById('sort-by') as HTMLSelectElement).value;
+
+      filteredApps = allApplications.filter((app: any) => {
+        const profile = app.profiles;
+        const job = app.jobs;
+
+        if (search) {
+          const name = (profile?.full_name || '').toLowerCase();
+          const email = (profile?.email || '').toLowerCase();
+          if (!name.includes(search) && !email.includes(search)) return false;
+        }
+        if (jobFilter && job?.title !== jobFilter) return false;
+        if (statusFilter && app.status !== statusFilter) return false;
+        if (countryFilter && profile?.country !== countryFilter) return false;
+        return true;
+      });
+
+      // Sort
+      filteredApps.sort((a: any, b: any) => {
+        switch (sortBy) {
+          case 'date-asc':
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          case 'score-desc': {
+            const sa = getScore(a) ?? -1;
+            const sb = getScore(b) ?? -1;
+            return sb - sa;
+          }
+          case 'score-asc': {
+            const sa = getScore(a) ?? Infinity;
+            const sb = getScore(b) ?? Infinity;
+            return sa - sb;
+          }
+          case 'country-asc':
+            return (a.profiles?.country || '').localeCompare(b.profiles?.country || '');
+          default: // date-desc
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+      });
+
+      currentPage = 1;
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('candidates-body')!;
+      const emptyState = document.getElementById('empty-state')!;
+      const pagination = document.getElementById('pagination')!;
+
+      if (filteredApps.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        pagination.innerHTML = '';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      const totalPages = Math.ceil(filteredApps.length / PAGE_SIZE);
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageApps = filteredApps.slice(start, start + PAGE_SIZE);
+
+      tbody.innerHTML = pageApps.map((app: any) => {
+        const profile = app.profiles;
+        const job = app.jobs;
+        const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
+        const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+        const score = getScore(app);
+        const scoreDisplay = score !== null ? `${score}%` : '—';
+
+        return `
+          <tr class="hover cursor-pointer" data-app-id="${app.id}" data-profile-id="${profile?.id || ''}">
+            <td class="font-medium">${profile?.full_name || '—'}</td>
+            <td class="text-sm">${profile?.email || '—'}</td>
+            <td>${profile?.country || '—'}</td>
+            <td>${job?.title || '—'}</td>
+            <td><span class="badge badge-sm ${status.class}">${status.label}</span></td>
+            <td>${scoreDisplay}</td>
+            <td class="text-sm">${date}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Add click handlers
+      tbody.querySelectorAll('tr[data-app-id]').forEach(row => {
+        row.addEventListener('click', () => {
+          const appId = row.getAttribute('data-app-id');
+          window.location.href = `/admin/candidates/${appId}`;
+        });
+      });
+
+      // Pagination
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+
+      let paginationHtml = '';
+      paginationHtml += `<button class="btn btn-sm ${currentPage === 1 ? 'btn-disabled' : ''}" data-page="${currentPage - 1}">«</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : ''}" data-page="${i}">${i}</button>`;
+      }
+      paginationHtml += `<button class="btn btn-sm ${currentPage === totalPages ? 'btn-disabled' : ''}" data-page="${currentPage + 1}">»</button>`;
+      pagination.innerHTML = paginationHtml;
+
+      pagination.querySelectorAll('button[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const page = parseInt(btn.getAttribute('data-page')!);
+          if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            renderTable();
+          }
+        });
+      });
+    }
+
+    // Event listeners
+    document.getElementById('search-input')!.addEventListener('input', applyFilters);
+    document.getElementById('filter-job')!.addEventListener('change', applyFilters);
+    document.getElementById('filter-status')!.addEventListener('change', applyFilters);
+    document.getElementById('filter-country')!.addEventListener('change', applyFilters);
+    document.getElementById('sort-by')!.addEventListener('change', applyFilters);
+
+    loadData();
+  </script>
+</AdminLayout>

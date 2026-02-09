@@ -169,3 +169,18 @@
   - File upload to Supabase Storage: use `supabase.storage.from('bucket').upload(path, file)`
   - Unique constraint error code is '23505'
 ---
+
+## 2026-02-09 - S4-001
+- Created AdminLayout.astro with sidebar navigation, mobile drawer, admin role check
+- Created /admin/index.astro dashboard page with stats cards, recent applications, quick links
+- Sidebar links: Dashboard, Candidats, Postes, Vivier, Statistiques
+- Admin auth: checks profile.role === 'admin', redirects non-admins to /dashboard
+- Mobile: hamburger menu with drawer overlay
+- Files changed: src/layouts/AdminLayout.astro (new), src/pages/admin/index.astro (new)
+- **Learnings for future iterations:**
+  - AdminLayout uses separate loading/app divs for auth check (same pattern as dashboard)
+  - Admin pages use `noindex, nofollow` meta tag
+  - Import path from admin pages: `../../layouts/AdminLayout.astro`
+  - DaisyUI `drawer` with `lg:drawer-open` gives permanent sidebar on desktop, overlay on mobile
+  - Supabase `select('*', { count: 'exact', head: true })` returns count without data
+---

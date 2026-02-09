@@ -323,7 +323,7 @@
       "id": "S4-001",
       "title": "Create admin layout and navigation",
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Admin layout component",
         "Sidebar navigation: Dashboard, Candidates, Jobs, Pool, Stats",
@@ -335,7 +335,7 @@
       "id": "S4-002",
       "title": "Create admin dashboard",
       "priority": 25,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin page",
         "Summary stats: total candidates, pending review, hired this month",
