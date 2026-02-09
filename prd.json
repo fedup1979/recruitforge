@@ -1,0 +1,660 @@
+{
+  "projectName": "AMBITIA",
+  "description": "Plateforme de recrutement international AI-powered",
+  "branchName": "feature/ambitia-mvp",
+  "userStories": [
+    {
+      "id": "S1-001",
+      "title": "Initialize Astro project with DaisyUI",
+      "priority": 1,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Astro project initialized with `npm create astro@latest`",
+        "Tailwind CSS installed and configured",
+        "DaisyUI installed and configured with custom 'ambitia' theme",
+        "Theme colors: primary #2D5BFF, secondary #6C5CE7, accent #00D9A3, neutral #1A1D29",
+        "Inter font from Google Fonts configured",
+        "Project builds without errors"
+      ]
+    },
+    {
+      "id": "S1-002",
+      "title": "Create base layout component",
+      "priority": 2,
+      "passes": false,
+      "acceptanceCriteria": [
+        "BaseLayout.astro component created",
+        "Responsive navbar with AMBITIA logo placeholder",
+        "Mobile hamburger menu",
+        "Footer with copyright and links",
+        "Meta tags for SEO"
+      ]
+    },
+    {
+      "id": "S1-003",
+      "title": "Create landing page",
+      "priority": 3,
+      "passes": false,
+      "acceptanceCriteria": [
+        "index.astro page created",
+        "Hero section with tagline 'Trouvez le poste qui vous correspond'",
+        "Placeholder for video teaser (15s François)",
+        "CTA button 'Voir les postes' linking to /jobs",
+        "Brief mission statement section",
+        "Mobile responsive"
+      ]
+    },
+    {
+      "id": "S1-004",
+      "title": "Create jobs listing page",
+      "priority": 4,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/jobs page created",
+        "Job card component with title, location, country flag, salary badge in local currency",
+        "Salary badge shows local currency format (e.g. '2.5M Ariary/mois', '6 000 DH/mois')",
+        "Filter jobs by country",
+        "Link to job detail page /jobs/[id]",
+        "Empty state when no jobs",
+        "Mobile responsive grid"
+      ]
+    },
+    {
+      "id": "S1-005",
+      "title": "Create job detail page",
+      "priority": 5,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/jobs/[id].astro dynamic page created",
+        "Full job description display",
+        "Requirements list",
+        "Salary in local currency and contract info clearly visible",
+        "Country and location displayed",
+        "CTA 'Postuler' button (links to /apply/[id] - disabled for now)",
+        "Back to jobs link"
+      ]
+    },
+    {
+      "id": "S1-006",
+      "title": "Setup Supabase project and auth",
+      "priority": 6,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Supabase client configured in src/lib/supabase.ts",
+        "Environment variables for SUPABASE_URL and SUPABASE_ANON_KEY",
+        "Google OAuth provider enabled in Supabase dashboard (manual step documented)",
+        ".env.example file with required variables"
+      ]
+    },
+    {
+      "id": "S1-007",
+      "title": "Create profiles table with RLS",
+      "priority": 7,
+      "passes": false,
+      "acceptanceCriteria": [
+        "profiles table created with: id, email, full_name, phone, country, role, created_at, updated_at",
+        "role CHECK constraint: candidate, recruiter, admin",
+        "RLS enabled on table",
+        "Policy: users can read/update their own profile",
+        "Policy: admins can read all profiles",
+        "Trigger to create profile on auth.users insert",
+        "RLS test file created in tests/rls/"
+      ]
+    },
+    {
+      "id": "S1-008",
+      "title": "Create jobs table with RLS (multi-country support)",
+      "priority": 8,
+      "passes": false,
+      "acceptanceCriteria": [
+        "jobs table created with: id, title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config, created_at",
+        "country field: ISO country code (e.g. 'MG', 'MA')",
+        "salary_amount: numeric field for the salary amount",
+        "salary_currency: currency code (e.g. 'MGA', 'MAD', 'XOF')",
+        "salary_label: human-readable salary text (e.g. '2.5M Ariary/mois')",
+        "status CHECK constraint: draft, open, closed",
+        "RLS enabled",
+        "Policy: anyone can read open jobs",
+        "Policy: admins can CRUD all jobs",
+        "RLS test file created",
+        "Same job title can be published for multiple countries as separate rows"
+      ]
+    },
+    {
+      "id": "S1-009",
+      "title": "Create About page",
+      "priority": 9,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/about page created",
+        "AMBITIA mission statement",
+        "Brief description of how the platform works (3 steps)",
+        "Team/company placeholder section",
+        "Link to /jobs",
+        "Mobile responsive"
+      ]
+    },
+    {
+      "id": "S2-001",
+      "title": "Create auth pages (login/signup)",
+      "priority": 10,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/login page with Google OAuth button",
+        "/login page with email/password form",
+        "/signup page with registration form",
+        "Redirect to /dashboard after successful auth",
+        "Error handling and display",
+        "Loading states"
+      ]
+    },
+    {
+      "id": "S2-002",
+      "title": "Create candidate dashboard",
+      "priority": 11,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/dashboard page (protected route)",
+        "Welcome message with user name",
+        "List of user's applications with status",
+        "Empty state: 'Pas encore de candidature'",
+        "Link to browse jobs"
+      ]
+    },
+    {
+      "id": "S2-003",
+      "title": "Create profile edit page",
+      "priority": 12,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/profile page (protected route)",
+        "Form to edit: full_name, phone, country",
+        "Country dropdown with Madagascar, Maroc, other African countries",
+        "Save button with loading state",
+        "Success/error toast notifications"
+      ]
+    },
+    {
+      "id": "S2-004",
+      "title": "Create applications table with RLS",
+      "priority": 13,
+      "passes": false,
+      "acceptanceCriteria": [
+        "applications table: id, user_id, job_id, status, knockout_answers, cv_url, created_at, updated_at",
+        "status CHECK: pending, testing, review, interview, hired, rejected, pool",
+        "UNIQUE constraint on (user_id, job_id)",
+        "RLS: candidates see only their applications",
+        "RLS: admins see all",
+        "RLS test file created"
+      ]
+    },
+    {
+      "id": "S2-005",
+      "title": "Create application form page",
+      "priority": 14,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/apply/[id] page (protected route)",
+        "Job summary at top",
+        "Knockout questions form (availability, internet, language)",
+        "Submit creates application in pending status",
+        "Redirect to dashboard after submit"
+      ]
+    },
+    {
+      "id": "S2-006",
+      "title": "Setup Supabase Storage for CVs",
+      "priority": 15,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Storage bucket 'candidates' created",
+        "RLS policy: users can upload to their own folder",
+        "RLS policy: users can read their own files",
+        "RLS policy: admins can read all files",
+        "Storage policy test documented"
+      ]
+    },
+    {
+      "id": "S2-007",
+      "title": "Add CV upload to application form",
+      "priority": 16,
+      "passes": false,
+      "acceptanceCriteria": [
+        "File input for PDF upload (max 5MB)",
+        "Client-side validation for file type and size",
+        "Upload to Supabase Storage on submit",
+        "File renamed to UUID",
+        "cv_url saved in application record",
+        "Upload progress indicator"
+      ]
+    },
+    {
+      "id": "S2-008",
+      "title": "Add progress bar to candidate dashboard",
+      "priority": 17,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Progress bar component showing application progress",
+        "Steps: Candidature → Tests → Review → Entretien → Décision",
+        "Current step highlighted based on application status",
+        "Percentage display"
+      ]
+    },
+    {
+      "id": "S3-001",
+      "title": "Create test_results table",
+      "priority": 18,
+      "passes": false,
+      "acceptanceCriteria": [
+        "test_results table: id, application_id, test_type, answers, score, audio_url, transcript, human_score, completed_at, created_at",
+        "RLS: candidates see their own results",
+        "RLS: admins see all",
+        "RLS test file created"
+      ]
+    },
+    {
+      "id": "S3-002",
+      "title": "Create consents table",
+      "priority": 19,
+      "passes": false,
+      "acceptanceCriteria": [
+        "consents table: id, user_id, consent_type, granted, granted_at, ip_address",
+        "consent_type examples: 'big_five_test', 'voice_recording', 'data_processing'",
+        "RLS: users can read/create their own consents",
+        "RLS test file created"
+      ]
+    },
+    {
+      "id": "S3-003",
+      "title": "Create Big Five test page",
+      "priority": 20,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/test/bigfive/[applicationId] page",
+        "Consent modal before test starts",
+        "TIPI-style questions (10 items short version)",
+        "Radio button answers (1-7 scale)",
+        "Progress indicator",
+        "Submit saves to test_results",
+        "Auto-score calculation"
+      ]
+    },
+    {
+      "id": "S3-004",
+      "title": "Create product training quiz page",
+      "priority": 21,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/test/quiz/[applicationId] page",
+        "Video embed placeholder (ESSR presentation)",
+        "Quiz questions about ESSR/FSM",
+        "Multiple choice format",
+        "Score calculation",
+        "Save results to test_results"
+      ]
+    },
+    {
+      "id": "S3-005",
+      "title": "Add test status tracking to application",
+      "priority": 22,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Dashboard shows which tests are completed",
+        "Tests page shows list of required tests for the job",
+        "Completed tests show score",
+        "Incomplete tests show 'Commencer' button",
+        "Application status updates based on test completion"
+      ]
+    },
+    {
+      "id": "S3-006",
+      "title": "Add test abandonment and retry logic",
+      "priority": 23,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Test progress saved on each answer",
+        "Abandoned tests can be resumed within 24h",
+        "After 24h, test marked as abandoned",
+        "Email notification for abandoned tests (placeholder)",
+        "Only 1 retry allowed"
+      ]
+    },
+    {
+      "id": "S4-001",
+      "title": "Create admin layout and navigation",
+      "priority": 24,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Admin layout component",
+        "Sidebar navigation: Dashboard, Candidates, Jobs, Pool, Stats",
+        "Admin route protection (check role=admin)",
+        "Redirect non-admins to /dashboard"
+      ]
+    },
+    {
+      "id": "S4-002",
+      "title": "Create admin dashboard",
+      "priority": 25,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin page",
+        "Summary stats: total candidates, pending review, hired this month",
+        "Recent applications list",
+        "Quick links to common actions"
+      ]
+    },
+    {
+      "id": "S4-003",
+      "title": "Create admin candidates list with advanced filtering",
+      "priority": 26,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/candidates page",
+        "Table with: name, email, country, job, status, date, score",
+        "Filter by job",
+        "Filter by status",
+        "Filter by country",
+        "Search by name/email",
+        "Sort by score (highest first)",
+        "Sort by date (newest/oldest)",
+        "Sort by country",
+        "Pagination",
+        "Click row to view detail"
+      ]
+    },
+    {
+      "id": "S4-004",
+      "title": "Create admin candidate detail page",
+      "priority": 27,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/candidates/[id] page",
+        "Candidate profile info",
+        "Application details",
+        "Test results with scores",
+        "CV download link",
+        "Status change dropdown",
+        "Notes section"
+      ]
+    },
+    {
+      "id": "S4-005",
+      "title": "Create admin jobs management",
+      "priority": 28,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/jobs page",
+        "List of all jobs with status, grouped by title (showing country variants)",
+        "Create new job button with country/salary/currency fields",
+        "Edit job form",
+        "Change job status (draft/open/closed)",
+        "View applicants count per job",
+        "Duplicate job for another country (pre-fills all fields except country/salary)"
+      ]
+    },
+    {
+      "id": "S4-006",
+      "title": "Add human scoring interface",
+      "priority": 29,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Scoring component on candidate detail page",
+        "Score grid matching SCORECARD (6 criteria, 1-5 each)",
+        "Total score calculation (/30)",
+        "Save human_score to test_results",
+        "Display previous scores if exists"
+      ]
+    },
+    {
+      "id": "S4-007",
+      "title": "Setup Vapi integration for voice roleplay",
+      "priority": 30,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Vapi SDK configured",
+        "Edge function to create Vapi call session",
+        "Environment variable for VAPI_API_KEY",
+        "Vapi assistant configured with roleplay persona (prospect ESSR)",
+        "2 scenario prompts: easy (motivated prospect) and medium (hesitant prospect)",
+        "Call recording enabled",
+        "Transcript generation enabled"
+      ]
+    },
+    {
+      "id": "S4-008",
+      "title": "Create roleplay candidate interface",
+      "priority": 31,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/test/roleplay/[applicationId] page",
+        "Consent modal for voice recording before starting",
+        "Brief instructions explaining the roleplay scenario",
+        "'Je suis prêt' button to start the call",
+        "In-call UI showing call duration and status",
+        "End call button",
+        "Audio recording saved to Supabase Storage",
+        "Transcript saved to test_results",
+        "Redirect to dashboard after completion"
+      ]
+    },
+    {
+      "id": "S4-009",
+      "title": "Add audio player and transcript to admin candidate detail",
+      "priority": 32,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Audio player component on candidate detail page for roleplay recordings",
+        "Play/pause/seek controls",
+        "Transcript displayed alongside audio player",
+        "Scoring grid accessible while listening to audio",
+        "Multiple recordings shown if candidate did multiple scenarios"
+      ]
+    },
+    {
+      "id": "S4-010",
+      "title": "Add bulk actions to admin candidates list",
+      "priority": 33,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Checkbox selection on each candidate row",
+        "Select all checkbox in header",
+        "Bulk action toolbar appears when candidates are selected",
+        "Bulk reject: set status to 'rejected' for all selected",
+        "Bulk pool: set status to 'pool' for all selected",
+        "Bulk advance: set status to next stage for all selected",
+        "Confirmation modal before executing bulk action",
+        "Success/error toast after bulk action"
+      ]
+    },
+    {
+      "id": "S4-011",
+      "title": "Add kanban view for candidates",
+      "priority": 34,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/candidates?view=kanban toggle on candidates page",
+        "Columns: Pending → Testing → Review → Interview → Hired/Rejected/Pool",
+        "Candidate cards showing name, country, score, date",
+        "Drag and drop cards between columns to change status",
+        "Column count badges",
+        "Filter by job still works in kanban view",
+        "Toggle between table view and kanban view"
+      ]
+    },
+    {
+      "id": "S4-012",
+      "title": "Add CSV export for candidates",
+      "priority": 35,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Export button on /admin/candidates page",
+        "Exports current filtered view (respects active filters)",
+        "CSV includes: name, email, country, phone, job, status, scores, date",
+        "File downloads as 'ambitia-candidates-YYYY-MM-DD.csv'",
+        "UTF-8 encoding for French characters"
+      ]
+    },
+    {
+      "id": "S5-001",
+      "title": "Setup Resend for transactional emails",
+      "priority": 36,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Resend SDK configured",
+        "Edge function for sending emails",
+        "Email templates: welcome, application received, test reminder",
+        "Environment variable for RESEND_API_KEY"
+      ]
+    },
+    {
+      "id": "S5-002",
+      "title": "Add email notifications for key events",
+      "priority": 37,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Email on new application",
+        "Email on status change",
+        "Email reminder for incomplete tests (24h)",
+        "Email invitation for roleplay (when admin advances to interview stage)",
+        "Emails use AMBITIA branding"
+      ]
+    },
+    {
+      "id": "S5-003",
+      "title": "Create pool management page",
+      "priority": 38,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/pool page",
+        "List candidates in pool status grouped by job",
+        "Filter by job",
+        "Action to move back to active consideration",
+        "Action to send pool notification email"
+      ]
+    },
+    {
+      "id": "S5-004",
+      "title": "Add basic funnel stats",
+      "priority": 39,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/admin/stats page",
+        "Funnel visualization: Applied → Testing → Review → Interview → Hired",
+        "Conversion rates between stages",
+        "Filter by job",
+        "Filter by country",
+        "Filter by date range"
+      ]
+    },
+    {
+      "id": "S5-005",
+      "title": "Run full RLS test suite",
+      "priority": 40,
+      "passes": false,
+      "acceptanceCriteria": [
+        "All RLS test files pass",
+        "Test candidate cannot see other candidates' data",
+        "Test candidate cannot access admin routes",
+        "Test admin can access all data",
+        "Document test results"
+      ]
+    },
+    {
+      "id": "S6-001",
+      "title": "Setup Sentry error monitoring",
+      "priority": 41,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Sentry SDK installed and configured",
+        "Errors automatically reported",
+        "Environment variable for SENTRY_DSN",
+        "Test error reporting works"
+      ]
+    },
+    {
+      "id": "S6-002",
+      "title": "Mobile responsive audit and fixes",
+      "priority": 42,
+      "passes": false,
+      "acceptanceCriteria": [
+        "All pages tested on mobile viewport",
+        "No horizontal scroll",
+        "Touch targets min 44px",
+        "Forms usable on mobile",
+        "Navigation works on mobile"
+      ]
+    },
+    {
+      "id": "S6-003",
+      "title": "Create Privacy Policy page",
+      "priority": 43,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/privacy page",
+        "GDPR compliant content",
+        "Data collection explained",
+        "Data retention periods listed",
+        "Contact info for deletion requests",
+        "DPA with Supabase mentioned",
+        "French and English versions"
+      ]
+    },
+    {
+      "id": "S6-004",
+      "title": "Create Terms of Service page",
+      "priority": 44,
+      "passes": false,
+      "acceptanceCriteria": [
+        "/terms page",
+        "User obligations",
+        "Service description",
+        "Limitation of liability",
+        "French and English versions"
+      ]
+    },
+    {
+      "id": "S6-005",
+      "title": "Seed Setter ESSR jobs (one per country)",
+      "priority": 45,
+      "passes": false,
+      "acceptanceCriteria": [
+        "Job record created for Madagascar: Setter - Formation Secrétaire Médicale, country='MG', salary_amount=2500000, salary_currency='MGA', salary_label='2.5M Ariary/mois'",
+        "Job record created for Morocco: Setter - Formation Secrétaire Médicale, country='MA', salary_amount=6000, salary_currency='MAD', salary_label='6 000 DH/mois'",
+        "Both jobs share same title, description from SCORECARD, requirements",
+        "test_config set for Big Five + Quiz + Roleplay on both",
+        "Status: open on both"
+      ]
+    },
+    {
+      "id": "S6-006",
+      "title": "Setup GitHub Pages deployment",
+      "priority": 46,
+      "passes": false,
+      "acceptanceCriteria": [
+        "GitHub Actions workflow for build and deploy",
+        "Astro configured for static output",
+        "Custom domain ready (once DNS configured)",
+        "Build succeeds on push to main"
+      ]
+    },
+    {
+      "id": "S6-007",
+      "title": "Final pre-launch checklist",
+      "priority": 47,
+      "passes": false,
+      "acceptanceCriteria": [
+        "All pages load without errors",
+        "Auth flow works end-to-end",
+        "Application flow works end-to-end",
+        "Tests flow works (Big Five + Quiz)",
+        "Roleplay flow works end-to-end",
+        "Admin can view, filter, sort, and score candidates",
+        "Admin can use kanban view and bulk actions",
+        "Emails send correctly",
+        "No console errors",
+        "Sentry receiving events",
+        "README updated with setup instructions"
+      ]
+    }
+  ]
+}

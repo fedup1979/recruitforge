@@ -1,0 +1,24 @@
+# AMBITIA Progress Log
+# Append-only learnings for Claude Code iterations
+
+## Project Context
+- Platform: Recruitment platform for ESSR (Swiss health school)
+- First job: Setter for FSM (Formation Secrétaire Médicale)
+- Stack: Astro + Supabase + DaisyUI + GitHub Pages
+- Target users: Candidates from Madagascar, Morocco, francophone Africa
+
+## Key Files to Reference
+- PLAN-AMBITIA-V3-FINAL.md - Full project plan
+- METHODOLOGY-AMBITIA.md - Development guidelines
+- SCORECARD-SETTER-ESSR.md - Setter job scorecard with evaluation criteria
+- ESSR-FORMATIONS.md - ESSR product knowledge
+
+## Critical Rules
+1. RLS (Row Level Security) on EVERY Supabase table
+2. Mobile-first design (target audience = mobile users in Africa)
+3. Consent modals BEFORE Big Five test and voice recording
+4. French is primary language, English secondary
+5. Theme colors: primary #2D5BFF, secondary #6C5CE7, accent #00D9A3
+
+---
+# Iteration Logs (append below)
