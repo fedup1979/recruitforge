@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mon tableau de bord — AMBITIA" description="Suivez vos candidatures et votre progression.">
+  <section class="py-12 px-4">
+    <div class="max-w-3xl mx-auto">
+      <!-- Loading state -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <p class="text-base-content/60 mt-4">Chargement...</p>
+      </div>
+
+      <!-- Dashboard content (hidden until auth check) -->
+      <div id="dashboard" class="hidden">
+        <h1 class="text-3xl font-bold text-base-content mb-2">
+          Bonjour <span id="user-name" class="text-primary"></span>
+        </h1>
+        <p class="text-base-content/60 mb-8">Voici vos candidatures en cours.</p>
+
+        <!-- Applications list -->
+        <div id="applications-list">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="text-center py-16 hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h2 class="text-xl font-semibold text-base-content/50 mb-2">Pas encore de candidature</h2>
+          <p class="text-base-content/40 mb-6">Commencez par consulter nos offres d'emploi.</p>
+          <a href="/jobs" class="btn btn-primary">Voir les postes</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const dashboardDiv = document.getElementById('dashboard') as HTMLDivElement;
+  const userNameSpan = document.getElementById('user-name') as HTMLSpanElement;
+  const applicationsList = document.getElementById('applications-list') as HTMLDivElement;
+  const emptyState = document.getElementById('empty-state') as HTMLDivElement;
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+
+    // Get user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', session.user.id)
+      .single();
+
+    const displayName = profile?.full_name
+      || session.user.user_metadata?.full_name
+      || session.user.email?.split('@')[0]
+      || 'candidat';
+
+    userNameSpan.textContent = displayName;
+
+    // Get applications
+    const { data: applications } = await supabase
+      .from('applications')
+      .select('id, status, created_at, jobs(title, country, salary_label)')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    loadingDiv.classList.add('hidden');
+    dashboardDiv.classList.remove('hidden');
+
+    if (!applications || applications.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    const statusLabels: Record<string, { label: string; class: string }> = {
+      pending: { label: 'En attente', class: 'badge-warning' },
+      testing: { label: 'Tests en cours', class: 'badge-info' },
+      review: { label: 'En évaluation', class: 'badge-secondary' },
+      interview: { label: 'Entretien', class: 'badge-accent' },
+      hired: { label: 'Embauché', class: 'badge-success' },
+      rejected: { label: 'Refusé', class: 'badge-error' },
+      pool: { label: 'En vivier', class: 'badge-neutral' },
+    };
+
+    applicationsList.innerHTML = applications.map((app: any) => {
+      const job = app.jobs;
+      const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
+      const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+      return `
+        <div class="card bg-base-200 shadow-sm mb-4">
+          <div class="card-body">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 class="font-semibold text-base-content">${job?.title || 'Poste'}</h3>
+                <p class="text-sm text-base-content/60">${job?.salary_label || ''} &middot; Postulé le ${date}</p>
+              </div>
+              <span class="badge ${status.class}">${status.label}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  init();
+</script>
