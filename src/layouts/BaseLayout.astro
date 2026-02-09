@@ -8,7 +8,7 @@ interface Props {
 
 const {
   title = 'AMBITIA — Recrutement international',
-  description = 'Plateforme de recrutement international AI-powered. Trouvez le poste qui vous correspond.',
+  description = 'AMBITIA connecte les talents du monde entier avec des missions stables et bien rémunérées en télétravail.',
 } = Astro.props;
 ---
 
@@ -57,8 +57,12 @@ const {
           <li><a href="/about">À propos</a></li>
         </ul>
       </div>
-      <div class="navbar-end">
-        <a href="/login" class="btn btn-primary btn-sm">Connexion</a>
+      <div class="navbar-end" id="navbar-auth">
+        <a href="/login" class="btn btn-primary btn-sm" id="nav-login">Connexion</a>
+        <div class="hidden flex items-center gap-2" id="nav-logged">
+          <a href="/dashboard" class="btn btn-ghost btn-sm">Dashboard</a>
+          <button class="btn btn-outline btn-sm" id="nav-logout">Déconnexion</button>
+        </div>
       </div>
     </div>
 
@@ -79,5 +83,31 @@ const {
         <p>&copy; {new Date().getFullYear()} AMBITIA. Tous droits réservés.</p>
       </aside>
     </footer>
+
+    <script>
+      import { createClient } from '@supabase/supabase-js';
+      const supabase = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      );
+
+      async function updateNav() {
+        const { data: { session } } = await supabase.auth.getSession();
+        const loginBtn = document.getElementById('nav-login');
+        const loggedDiv = document.getElementById('nav-logged');
+        if (session) {
+          loginBtn?.classList.add('hidden');
+          loggedDiv?.classList.remove('hidden');
+          loggedDiv?.classList.add('flex');
+        }
+      }
+
+      document.getElementById('nav-logout')?.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      });
+
+      updateNav();
+    </script>
   </body>
 </html>

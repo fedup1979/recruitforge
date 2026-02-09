@@ -13,85 +13,40 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       Contact : <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a></p>
 
       <h2>2. Données collectées</h2>
-      <p>Nous collectons les données suivantes dans le cadre du processus de recrutement :</p>
+      <p>Dans le cadre de votre candidature, nous collectons :</p>
       <ul>
-        <li><strong>Données d'identification</strong> : nom complet, adresse email, numéro de téléphone, pays de résidence</li>
-        <li><strong>Données professionnelles</strong> : CV (fichier PDF), expérience professionnelle</li>
-        <li><strong>Résultats de tests</strong> : scores du test de personnalité (Big Five TIPI-10), scores du quiz de connaissance produit</li>
-        <li><strong>Enregistrements vocaux</strong> : enregistrement audio et transcription du test de roleplay vocal (avec consentement explicite)</li>
-        <li><strong>Données techniques</strong> : adresse IP, type de navigateur (via Sentry pour le monitoring d'erreurs)</li>
+        <li>Vos informations d'identification (nom, email, téléphone, pays)</li>
+        <li>Votre CV</li>
+        <li>Les résultats de tests d'évaluation</li>
+        <li>Avec votre consentement explicite : des enregistrements vocaux lors de simulations d'entretien</li>
       </ul>
 
-      <h2>3. Finalités du traitement</h2>
-      <ul>
-        <li>Gestion du processus de recrutement et évaluation des candidatures</li>
-        <li>Communication avec les candidats (notifications, rappels)</li>
-        <li>Amélioration de notre plateforme et de nos services</li>
-        <li>Monitoring des erreurs techniques (Sentry)</li>
-      </ul>
+      <h2>3. Finalités</h2>
+      <p>Vos données sont utilisées exclusivement pour le traitement de votre candidature et la communication liée au processus de recrutement.</p>
 
       <h2>4. Base légale</h2>
-      <ul>
-        <li><strong>Consentement</strong> : pour l'enregistrement vocal et le test de personnalité (consentement explicite requis)</li>
-        <li><strong>Intérêt légitime</strong> : pour la gestion du recrutement et l'amélioration des services</li>
-        <li><strong>Exécution contractuelle</strong> : pour le traitement de votre candidature</li>
-      </ul>
+      <p>Le traitement repose sur votre consentement et sur l'exécution des mesures précontractuelles liées à votre candidature.</p>
 
       <h2>5. Durées de conservation</h2>
-      <table>
-        <thead>
-          <tr><th>Catégorie</th><th>Durée</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Candidats embauchés</td><td>3 ans après fin de contrat</td></tr>
-          <tr><td>Candidats rejetés</td><td>2 ans après la décision</td></tr>
-          <tr><td>Candidats en vivier</td><td>6 mois (renouvelable avec consentement)</td></tr>
-          <tr><td>Données techniques (logs)</td><td>90 jours</td></tr>
-        </tbody>
-      </table>
-
-      <h2>6. Sous-traitants</h2>
-      <p>Vos données sont hébergées et traitées par les sous-traitants suivants :</p>
       <ul>
-        <li><strong>Supabase</strong> (hébergement base de données et stockage) — EU-West, conforme RGPD, DPA signé</li>
-        <li><strong>Google</strong> (authentification OAuth)</li>
-        <li><strong>Vapi</strong> (IA vocale pour le test de roleplay)</li>
-        <li><strong>Resend</strong> (envoi d'emails transactionnels)</li>
-        <li><strong>Sentry</strong> (monitoring d'erreurs)</li>
-        <li><strong>GitHub Pages</strong> (hébergement du site statique)</li>
+        <li>Candidats retenus : 3 ans après fin de collaboration</li>
+        <li>Candidats non retenus : 2 ans</li>
+        <li>Vivier de candidats : 6 mois, renouvelable avec votre accord</li>
       </ul>
+
+      <h2>6. Hébergement</h2>
+      <p>Vos données sont hébergées au sein de l'Union européenne par des sous-traitants conformes au RGPD.</p>
 
       <h2>7. Vos droits</h2>
-      <p>Conformément au RGPD, vous disposez des droits suivants :</p>
-      <ul>
-        <li><strong>Droit d'accès</strong> : obtenir une copie de vos données personnelles</li>
-        <li><strong>Droit de rectification</strong> : corriger vos données inexactes</li>
-        <li><strong>Droit à l'effacement</strong> : demander la suppression de vos données</li>
-        <li><strong>Droit à la portabilité</strong> : recevoir vos données dans un format structuré</li>
-        <li><strong>Droit d'opposition</strong> : vous opposer au traitement de vos données</li>
-        <li><strong>Droit de retrait du consentement</strong> : retirer votre consentement à tout moment</li>
-      </ul>
-      <p>Pour exercer vos droits, contactez-nous à <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a>. Nous répondons dans un délai de 30 jours.</p>
+      <p>Conformément au RGPD, vous pouvez à tout moment demander l'accès, la rectification, la suppression ou la portabilité de vos données. Vous pouvez également retirer votre consentement ou vous opposer au traitement.</p>
+      <p>Contact : <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a> — Réponse sous 30 jours.</p>
 
-      <h2>8. Sécurité</h2>
-      <p>Nous mettons en œuvre des mesures techniques et organisationnelles pour protéger vos données :</p>
-      <ul>
-        <li>Chiffrement des données en transit (HTTPS/TLS)</li>
-        <li>Row Level Security (RLS) sur toutes les tables de la base de données</li>
-        <li>Authentification sécurisée (OAuth 2.0, tokens JWT)</li>
-        <li>Accès restreint aux données sensibles (principe du moindre privilège)</li>
-      </ul>
-
-      <h2>9. Cookies</h2>
-      <p>Notre site utilise uniquement des cookies techniques nécessaires au fonctionnement de l'authentification. Nous n'utilisons pas de cookies publicitaires ou de tracking.</p>
-
-      <h2>10. Contact</h2>
-      <p>Pour toute question relative à cette politique de confidentialité :<br />
-      Email : <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a></p>
+      <h2>8. Cookies</h2>
+      <p>Nous utilisons uniquement des cookies techniques nécessaires au fonctionnement du site. Aucun cookie publicitaire ou de tracking.</p>
 
       <div class="divider"></div>
 
-      <h1>Privacy Policy (English)</h1>
+      <h1>Privacy Policy</h1>
       <p class="text-sm text-base-content/60">Last updated: February 9, 2026</p>
 
       <h2>1. Data Controller</h2>
@@ -99,32 +54,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       Contact: <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a></p>
 
       <h2>2. Data Collected</h2>
+      <p>As part of your application, we collect:</p>
       <ul>
-        <li><strong>Identification data</strong>: full name, email address, phone number, country of residence</li>
-        <li><strong>Professional data</strong>: CV (PDF file), work experience</li>
-        <li><strong>Test results</strong>: personality test scores (Big Five TIPI-10), product knowledge quiz scores</li>
-        <li><strong>Voice recordings</strong>: audio recording and transcript of voice roleplay test (with explicit consent)</li>
-        <li><strong>Technical data</strong>: IP address, browser type (via Sentry for error monitoring)</li>
+        <li>Identification data (name, email, phone, country)</li>
+        <li>Your CV</li>
+        <li>Assessment test results</li>
+        <li>With your explicit consent: voice recordings during interview simulations</li>
       </ul>
 
-      <h2>3. Data Retention</h2>
-      <table>
-        <thead>
-          <tr><th>Category</th><th>Duration</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Hired candidates</td><td>3 years after end of contract</td></tr>
-          <tr><td>Rejected candidates</td><td>2 years after decision</td></tr>
-          <tr><td>Pool candidates</td><td>6 months (renewable with consent)</td></tr>
-          <tr><td>Technical data (logs)</td><td>90 days</td></tr>
-        </tbody>
-      </table>
+      <h2>3. Purpose</h2>
+      <p>Your data is used solely for processing your application and related recruitment communications.</p>
 
-      <h2>4. Your Rights</h2>
-      <p>Under GDPR, you have the right to access, rectify, erase, port, and object to the processing of your personal data. Contact us at <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a>.</p>
+      <h2>4. Data Retention</h2>
+      <ul>
+        <li>Hired candidates: 3 years after end of collaboration</li>
+        <li>Rejected candidates: 2 years</li>
+        <li>Talent pool: 6 months, renewable with your consent</li>
+      </ul>
 
-      <h2>5. Sub-processors</h2>
-      <p>Supabase (EU-West, GDPR compliant, DPA signed), Google (OAuth), Vapi (voice AI), Resend (transactional emails), Sentry (error monitoring), GitHub Pages (static hosting).</p>
+      <h2>5. Your Rights</h2>
+      <p>Under GDPR, you may request access, rectification, erasure, or portability of your data at any time. You may also withdraw consent or object to processing.</p>
+      <p>Contact: <a href="mailto:privacy@ambitia.io">privacy@ambitia.io</a> — Response within 30 days.</p>
     </div>
   </section>
 </BaseLayout>
