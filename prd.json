@@ -536,7 +536,7 @@
       "id": "S5-004",
       "title": "Add basic funnel stats",
       "priority": 39,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/stats page",
         "Funnel visualization: Applied → Testing → Review → Interview → Hired",
