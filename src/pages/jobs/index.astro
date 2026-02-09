@@ -1,10 +1,5 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import JobCard from '../../components/JobCard.astro';
-import { jobs } from '../../data/jobs';
-
-const openJobs = jobs.filter((j) => j.status === 'open');
-const countries = [...new Set(openJobs.map((j) => j.country))];
 ---
 
 <BaseLayout title="Postes ouverts — AMBITIA" description="Découvrez nos offres d'emploi en télétravail. Postes ouverts à Madagascar, au Maroc et en Afrique francophone.">
@@ -13,47 +8,31 @@ const countries = [...new Set(openJobs.map((j) => j.country))];
       <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-2">Postes ouverts</h1>
       <p class="text-base-content/70 mb-8">Trouvez le poste qui vous correspond et postulez en quelques clics.</p>
 
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
       <!-- Country filter -->
-      <div class="flex flex-wrap gap-2 mb-8" id="country-filter">
+      <div class="flex flex-wrap gap-2 mb-8 hidden" id="country-filter">
         <button class="btn btn-sm btn-primary filter-btn" data-country="all">Tous</button>
-        {countries.map((code) => {
-          const job = openJobs.find((j) => j.country === code)!;
-          return (
-            <button class="btn btn-sm btn-outline filter-btn" data-country={code}>
-              {job.countryFlag} {job.countryName}
-            </button>
-          );
-        })}
       </div>
 
       <!-- Jobs grid -->
-      {openJobs.length > 0 ? (
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="jobs-grid">
-          {openJobs.map((job) => (
-            <div data-country={job.country}>
-              <JobCard
-                id={job.id}
-                title={job.title}
-                countryFlag={job.countryFlag}
-                countryName={job.countryName}
-                location={job.location}
-                salary_label={job.salary_label}
-                contract_type={job.contract_type}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.64-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          <h2 class="text-xl font-semibold text-base-content/50 mb-2">Aucun poste ouvert pour le moment</h2>
-          <p class="text-base-content/40">Revenez bientôt, de nouvelles offres arrivent régulièrement.</p>
-        </div>
-      )}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden" id="jobs-grid">
+        <!-- Populated by JS -->
+      </div>
 
-      <!-- Empty state for filtered results (hidden by default) -->
+      <!-- Empty state -->
+      <div class="text-center py-16 hidden" id="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.64-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h2 class="text-xl font-semibold text-base-content/50 mb-2">Aucun poste ouvert pour le moment</h2>
+        <p class="text-base-content/40">Revenez bientôt, de nouvelles offres arrivent régulièrement.</p>
+      </div>
+
+      <!-- Filtered empty state -->
       <div class="text-center py-16 hidden" id="no-results">
         <p class="text-lg text-base-content/50">Aucun poste disponible pour ce pays.</p>
         <button class="btn btn-sm btn-primary mt-4 reset-filter">Voir tous les postes</button>
@@ -63,16 +42,89 @@ const countries = [...new Set(openJobs.map((j) => j.country))];
 </BaseLayout>
 
 <script>
-  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
-  const resetBtns = document.querySelectorAll<HTMLButtonElement>('.reset-filter');
-  const jobCards = document.querySelectorAll<HTMLElement>('#jobs-grid > div');
-  const grid = document.getElementById('jobs-grid');
-  const noResults = document.getElementById('no-results');
+  import { createClient } from '@supabase/supabase-js';
 
-  function filterByCountry(country: string) {
-    let visibleCount = 0;
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
 
-    filterBtns.forEach((btn) => {
+  const countryMap: Record<string, { name: string; flag: string }> = {
+    MG: { name: 'Madagascar', flag: '🇲🇬' },
+    MA: { name: 'Maroc', flag: '🇲🇦' },
+    SN: { name: 'Sénégal', flag: '🇸🇳' },
+    CI: { name: "Côte d'Ivoire", flag: '🇨🇮' },
+    CM: { name: 'Cameroun', flag: '🇨🇲' },
+    TN: { name: 'Tunisie', flag: '🇹🇳' },
+    CD: { name: 'RD Congo', flag: '🇨🇩' },
+    FR: { name: 'France', flag: '🇫🇷' },
+  };
+
+  function getCountry(code: string) {
+    return countryMap[code] || { name: code, flag: '🌍' };
+  }
+
+  const loadingDiv = document.getElementById('loading')!;
+  const filterDiv = document.getElementById('country-filter')!;
+  const grid = document.getElementById('jobs-grid')!;
+  const emptyState = document.getElementById('empty-state')!;
+  const noResults = document.getElementById('no-results')!;
+
+  interface Job {
+    id: string;
+    title: string;
+    description: string;
+    country: string;
+    location: string;
+    salary_label: string;
+    contract_type: string;
+  }
+
+  let allJobs: Job[] = [];
+
+  async function init() {
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select('id, title, description, country, location, salary_label, contract_type')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false });
+
+    loadingDiv.classList.add('hidden');
+
+    if (error || !jobs || jobs.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    allJobs = jobs;
+
+    // Build country filter buttons
+    const countries = [...new Set(jobs.map(j => j.country))];
+    countries.forEach(code => {
+      const c = getCountry(code);
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-outline filter-btn';
+      btn.dataset.country = code;
+      btn.textContent = `${c.flag} ${c.name}`;
+      filterDiv.appendChild(btn);
+    });
+
+    filterDiv.classList.remove('hidden');
+    renderJobs('all');
+
+    // Filter event listeners
+    filterDiv.querySelectorAll<HTMLButtonElement>('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => renderJobs(btn.dataset.country || 'all'));
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.reset-filter').forEach(btn => {
+      btn.addEventListener('click', () => renderJobs('all'));
+    });
+  }
+
+  function renderJobs(country: string) {
+    // Update filter button styles
+    filterDiv.querySelectorAll<HTMLButtonElement>('.filter-btn').forEach(btn => {
       if (btn.dataset.country === country) {
         btn.classList.remove('btn-outline');
         btn.classList.add('btn-primary');
@@ -82,35 +134,42 @@ const countries = [...new Set(openJobs.map((j) => j.country))];
       }
     });
 
-    jobCards.forEach((card) => {
-      if (country === 'all' || card.dataset.country === country) {
-        card.classList.remove('hidden');
-        visibleCount++;
-      } else {
-        card.classList.add('hidden');
-      }
-    });
+    const filtered = country === 'all' ? allJobs : allJobs.filter(j => j.country === country);
 
-    if (grid && noResults) {
-      if (visibleCount === 0) {
-        grid.classList.add('hidden');
-        noResults.classList.remove('hidden');
-      } else {
-        grid.classList.remove('hidden');
-        noResults.classList.add('hidden');
-      }
+    if (filtered.length === 0) {
+      grid.classList.add('hidden');
+      noResults.classList.remove('hidden');
+      return;
     }
+
+    noResults.classList.add('hidden');
+    grid.classList.remove('hidden');
+
+    grid.innerHTML = filtered.map(job => {
+      const c = getCountry(job.country);
+      return `
+        <a href="/jobs/detail?id=${job.id}" class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow" data-country="${job.country}">
+          <div class="card-body">
+            <h3 class="card-title text-base md:text-lg">${job.title}</h3>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <span class="badge badge-outline gap-1">
+                <span class="text-base">${c.flag}</span>
+                ${c.name}
+              </span>
+              <span class="badge badge-outline">${job.location}</span>
+              <span class="badge badge-outline">${job.contract_type}</span>
+            </div>
+            <div class="mt-3">
+              <span class="badge badge-primary badge-lg font-semibold">${job.salary_label}</span>
+            </div>
+            <div class="card-actions justify-end mt-2">
+              <span class="text-primary text-sm font-medium">Voir le poste &rarr;</span>
+            </div>
+          </div>
+        </a>
+      `;
+    }).join('');
   }
 
-  filterBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      filterByCountry(btn.dataset.country || 'all');
-    });
-  });
-
-  resetBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      filterByCountry('all');
-    });
-  });
+  init();
 </script>

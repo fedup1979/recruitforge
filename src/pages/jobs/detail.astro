@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Offre d'emploi — AMBITIA" description="Détails du poste chez AMBITIA.">
+  <section class="py-12 px-4">
+    <div class="max-w-3xl mx-auto">
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Error state -->
+      <div id="error-state" class="text-center py-16 hidden">
+        <h2 class="text-xl font-semibold text-base-content/50 mb-2">Poste introuvable</h2>
+        <p class="text-base-content/40 mb-4">Ce poste n'existe pas ou a été retiré.</p>
+        <a href="/jobs" class="btn btn-primary">Voir tous les postes</a>
+      </div>
+
+      <!-- Job content -->
+      <div id="job-content" class="hidden">
+        <!-- Back link -->
+        <a href="/jobs" class="btn btn-ghost btn-sm mb-6 gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour aux postes
+        </a>
+
+        <!-- Header -->
+        <h1 id="job-title" class="text-3xl md:text-4xl font-bold text-base-content mb-4"></h1>
+
+        <!-- Badges -->
+        <div id="job-badges" class="flex flex-wrap gap-2 mb-8"></div>
+
+        <!-- Description -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-base-content mb-3">Description du poste</h2>
+          <p id="job-description" class="text-base-content/80 leading-relaxed"></p>
+        </div>
+
+        <!-- Requirements -->
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-base-content mb-3">Compétences requises</h2>
+          <ul id="job-requirements" class="space-y-2"></ul>
+        </div>
+
+        <!-- Contract info -->
+        <div class="bg-base-200 rounded-xl p-6 mb-8">
+          <h2 class="text-xl font-semibold text-base-content mb-4">Conditions</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-base-content/50">Pays</p>
+              <p id="info-country" class="font-medium text-base-content"></p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/50">Localisation</p>
+              <p id="info-location" class="font-medium text-base-content"></p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/50">Salaire</p>
+              <p id="info-salary" class="font-medium text-base-content"></p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/50">Type de contrat</p>
+              <p id="info-contract" class="font-medium text-base-content"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="text-center">
+          <a id="apply-link" href="/apply" class="btn btn-primary btn-lg">
+            Postuler
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const countryMap: Record<string, { name: string; flag: string }> = {
+    MG: { name: 'Madagascar', flag: '🇲🇬' },
+    MA: { name: 'Maroc', flag: '🇲🇦' },
+    SN: { name: 'Sénégal', flag: '🇸🇳' },
+    CI: { name: "Côte d'Ivoire", flag: '🇨🇮' },
+    CM: { name: 'Cameroun', flag: '🇨🇲' },
+    TN: { name: 'Tunisie', flag: '🇹🇳' },
+    CD: { name: 'RD Congo', flag: '🇨🇩' },
+    FR: { name: 'France', flag: '🇫🇷' },
+  };
+
+  function getCountry(code: string) {
+    return countryMap[code] || { name: code, flag: '🌍' };
+  }
+
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('id');
+
+    if (!jobId) {
+      document.getElementById('loading')!.classList.add('hidden');
+      document.getElementById('error-state')!.classList.remove('hidden');
+      return;
+    }
+
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single();
+
+    document.getElementById('loading')!.classList.add('hidden');
+
+    if (error || !job) {
+      document.getElementById('error-state')!.classList.remove('hidden');
+      return;
+    }
+
+    const c = getCountry(job.country);
+
+    // Update page title
+    document.title = `${job.title} (${c.name}) — AMBITIA`;
+
+    // Populate content
+    document.getElementById('job-title')!.textContent = job.title;
+    document.getElementById('job-description')!.textContent = job.description || '';
+
+    // Badges
+    document.getElementById('job-badges')!.innerHTML = `
+      <span class="badge badge-lg badge-outline gap-1">
+        <span class="text-base">${c.flag}</span>
+        ${c.name}
+      </span>
+      <span class="badge badge-lg badge-outline">${job.location}</span>
+      <span class="badge badge-lg badge-outline">${job.contract_type}</span>
+      <span class="badge badge-lg badge-primary font-semibold">${job.salary_label}</span>
+    `;
+
+    // Requirements
+    const requirements: string[] = job.requirements || [];
+    document.getElementById('job-requirements')!.innerHTML = requirements.map(req => `
+      <li class="flex items-start gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="text-base-content/80">${req}</span>
+      </li>
+    `).join('');
+
+    // Info section
+    document.getElementById('info-country')!.textContent = `${c.flag} ${c.name}`;
+    document.getElementById('info-location')!.textContent = job.location;
+    document.getElementById('info-salary')!.textContent = job.salary_label;
+    document.getElementById('info-contract')!.textContent = job.contract_type;
+
+    // Apply link
+    (document.getElementById('apply-link') as HTMLAnchorElement).href = `/apply?job=${job.id}`;
+
+    document.getElementById('job-content')!.classList.remove('hidden');
+  }
+
+  init();
+</script>

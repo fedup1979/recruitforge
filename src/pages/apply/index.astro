@@ -1,19 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { jobs } from '../../data/jobs';
-import type { GetStaticPaths } from 'astro';
-
-export const getStaticPaths: GetStaticPaths = () => {
-  return jobs.map((job) => ({
-    params: { id: job.id },
-    props: { job },
-  }));
-};
-
-const { job } = Astro.props;
 ---
 
-<BaseLayout title={`Postuler — ${job.title} — AMBITIA`} description={`Postulez au poste ${job.title} chez AMBITIA.`}>
+<BaseLayout title="Postuler — AMBITIA" description="Postulez chez AMBITIA.">
   <section class="py-12 px-4">
     <div class="max-w-lg mx-auto">
       <!-- Loading state -->
@@ -21,17 +10,19 @@ const { job } = Astro.props;
         <span class="loading loading-spinner loading-lg text-primary"></span>
       </div>
 
+      <!-- Error state -->
+      <div id="error-state" class="text-center py-16 hidden">
+        <h2 class="text-xl font-semibold text-base-content/50 mb-2">Poste introuvable</h2>
+        <p class="text-base-content/40 mb-4">Ce poste n'existe pas ou a été retiré.</p>
+        <a href="/jobs" class="btn btn-primary">Voir tous les postes</a>
+      </div>
+
       <!-- Form content -->
       <div id="form-content" class="hidden">
         <!-- Job summary -->
         <div class="bg-base-200 rounded-xl p-4 mb-8">
-          <h2 class="font-semibold text-base-content">{job.title}</h2>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <span class="badge badge-sm badge-outline gap-1">
-              <span>{job.countryFlag}</span> {job.countryName}
-            </span>
-            <span class="badge badge-sm badge-primary">{job.salary_label}</span>
-          </div>
+          <h2 id="job-title" class="font-semibold text-base-content"></h2>
+          <div id="job-badges" class="flex flex-wrap gap-2 mt-2"></div>
         </div>
 
         <h1 class="text-2xl font-bold text-base-content mb-6">Postuler</h1>
@@ -43,7 +34,7 @@ const { job } = Astro.props;
 
         <!-- Knockout questions -->
         <form id="apply-form" class="space-y-6">
-          <input type="hidden" id="job-id" value={job.id} />
+          <input type="hidden" id="job-id" value="" />
 
           <div class="form-control">
             <label class="label">
@@ -121,7 +112,7 @@ const { job } = Astro.props;
           </button>
         </form>
 
-        <a href={`/jobs/${job.id}`} class="btn btn-ghost btn-sm mt-6 gap-1">
+        <a id="back-link" href="/jobs" class="btn btn-ghost btn-sm mt-6 gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
@@ -140,7 +131,23 @@ const { job } = Astro.props;
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY
   );
 
+  const countryMap: Record<string, { name: string; flag: string }> = {
+    MG: { name: 'Madagascar', flag: '🇲🇬' },
+    MA: { name: 'Maroc', flag: '🇲🇦' },
+    SN: { name: 'Sénégal', flag: '🇸🇳' },
+    CI: { name: "Côte d'Ivoire", flag: '🇨🇮' },
+    CM: { name: 'Cameroun', flag: '🇨🇲' },
+    TN: { name: 'Tunisie', flag: '🇹🇳' },
+    CD: { name: 'RD Congo', flag: '🇨🇩' },
+    FR: { name: 'France', flag: '🇫🇷' },
+  };
+
+  function getCountry(code: string) {
+    return countryMap[code] || { name: code, flag: '🌍' };
+  }
+
   const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const errorState = document.getElementById('error-state') as HTMLDivElement;
   const formContent = document.getElementById('form-content') as HTMLDivElement;
   const errorDiv = document.getElementById('msg-error') as HTMLDivElement;
   const errorText = document.getElementById('msg-error-text') as HTMLSpanElement;
@@ -176,7 +183,47 @@ const { job } = Astro.props;
       window.location.href = '/login';
       return;
     }
+
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get('job');
+
+    if (!jobId) {
+      loadingDiv.classList.add('hidden');
+      errorState.classList.remove('hidden');
+      return;
+    }
+
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .select('id, title, country, salary_label')
+      .eq('id', jobId)
+      .single();
+
     loadingDiv.classList.add('hidden');
+
+    if (error || !job) {
+      errorState.classList.remove('hidden');
+      return;
+    }
+
+    const c = getCountry(job.country);
+
+    // Update page title
+    document.title = `Postuler — ${job.title} — AMBITIA`;
+
+    // Populate job summary
+    document.getElementById('job-title')!.textContent = job.title;
+    document.getElementById('job-badges')!.innerHTML = `
+      <span class="badge badge-sm badge-outline gap-1">
+        <span>${c.flag}</span> ${c.name}
+      </span>
+      <span class="badge badge-sm badge-primary">${job.salary_label}</span>
+    `;
+
+    // Set job ID and back link
+    (document.getElementById('job-id') as HTMLInputElement).value = job.id;
+    (document.getElementById('back-link') as HTMLAnchorElement).href = `/jobs/detail?id=${job.id}`;
+
     formContent.classList.remove('hidden');
   }
 
@@ -224,8 +271,7 @@ const { job } = Astro.props;
       uploadProgress.classList.remove('hidden');
       uploadProgress.value = 30;
 
-      const fileExt = 'pdf';
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.pdf`;
       const filePath = `${session.user.id}/cv/${fileName}`;
 
       uploadProgress.value = 50;

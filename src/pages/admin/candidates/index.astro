@@ -452,7 +452,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           const score = getScore(app);
           const date = new Date(app.created_at).toLocaleDateString('fr-FR');
           return `
-            <div class="card bg-base-100 shadow-sm cursor-pointer kanban-card" data-app-id="${app.id}">
+            <div class="card bg-base-100 shadow-sm cursor-grab kanban-card" draggable="true" data-app-id="${app.id}">
               <div class="card-body p-3">
                 <p class="font-medium text-sm">${profile?.full_name || '—'}</p>
                 <p class="text-xs text-base-content/50">${profile?.country || ''}</p>
@@ -466,23 +466,75 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         }).join('');
 
         return `
-          <div class="min-w-[150px] flex-1">
+          <div class="min-w-[150px] flex-1 kanban-column" data-status="${col.key}">
             <div class="flex items-center justify-between mb-2">
               <h3 class="font-semibold text-sm">${col.label}</h3>
               <span class="badge badge-sm">${apps.length}</span>
             </div>
-            <div class="space-y-2 border-t-2 ${col.class} pt-3 min-h-[100px]">
-              ${cards || '<p class="text-xs text-base-content/30 text-center">Vide</p>'}
+            <div class="space-y-2 border-t-2 ${col.class} pt-3 min-h-[100px] kanban-dropzone" data-status="${col.key}">
+              ${cards || '<p class="text-xs text-base-content/30 text-center kanban-empty">Vide</p>'}
             </div>
           </div>
         `;
       }).join('');
 
-      // Card click handlers
+      // Drag and drop handlers
+      let draggedAppId: string | null = null;
+
       board.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('dragstart', (e) => {
+          draggedAppId = card.getAttribute('data-app-id');
+          (card as HTMLElement).style.opacity = '0.5';
+          (e as DragEvent).dataTransfer!.effectAllowed = 'move';
+        });
+        card.addEventListener('dragend', () => {
+          (card as HTMLElement).style.opacity = '1';
+          draggedAppId = null;
+          // Remove all drop highlights
+          board.querySelectorAll('.kanban-dropzone').forEach(z => {
+            (z as HTMLElement).classList.remove('bg-primary/10');
+          });
+        });
+        // Click to navigate (only if not dragging)
         card.addEventListener('click', () => {
           const appId = card.getAttribute('data-app-id');
           window.location.href = `/admin/candidates/detail?id=${appId}`;
+        });
+      });
+
+      board.querySelectorAll('.kanban-dropzone').forEach(zone => {
+        zone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          (e as DragEvent).dataTransfer!.dropEffect = 'move';
+          (zone as HTMLElement).classList.add('bg-primary/10');
+        });
+        zone.addEventListener('dragleave', () => {
+          (zone as HTMLElement).classList.remove('bg-primary/10');
+        });
+        zone.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          (zone as HTMLElement).classList.remove('bg-primary/10');
+          const newStatus = (zone as HTMLElement).dataset.status;
+          if (!draggedAppId || !newStatus) return;
+
+          // Find current status of this app
+          const app = allApplications.find(a => a.id === draggedAppId);
+          if (!app || app.status === newStatus) return;
+
+          // Update in Supabase
+          const { error } = await supabase
+            .from('applications')
+            .update({ status: newStatus })
+            .eq('id', draggedAppId);
+
+          if (error) {
+            alert('Erreur lors de la mise à jour: ' + error.message);
+            return;
+          }
+
+          // Update local data
+          app.status = newStatus;
+          applyFilters();
         });
       });
     }

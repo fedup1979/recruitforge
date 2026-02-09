@@ -12,7 +12,7 @@ interface Props {
 const { id, title, countryFlag, countryName, location, salary_label, contract_type } = Astro.props;
 ---
 
-<a href={`/jobs/${id}`} class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+<a href={`/jobs/detail?id=${id}`} class="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
   <div class="card-body">
     <h3 class="card-title text-base md:text-lg">{title}</h3>
     <div class="flex flex-wrap gap-2 mt-2">

@@ -234,11 +234,29 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       }
     });
 
-    // End call
-    document.getElementById('btn-end-call')!.addEventListener('click', () => {
+    // End call and save results
+    document.getElementById('btn-end-call')!.addEventListener('click', async () => {
       if (timerInterval) clearInterval(timerInterval);
 
+      const callDuration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0;
+
       document.getElementById('call-section')!.classList.add('hidden');
+
+      // Save roleplay result to test_results
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && applicationId) {
+        await supabase.from('test_results').insert({
+          application_id: applicationId,
+          test_type: 'roleplay',
+          score: null,
+          answers: {
+            scenario: scenarioType,
+            duration_seconds: callDuration,
+          },
+          completed_at: new Date().toISOString(),
+        });
+      }
+
       document.getElementById('completed-section')!.classList.remove('hidden');
     });
 

@@ -51,6 +51,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const requiredTests = [
     { type: 'big_five', label: 'Test de personnalité (Big Five)', url: '/test/bigfive', duration: '~10 min' },
     { type: 'quiz', label: 'Quiz Formation ESSR', url: '/test/quiz', duration: '~10 min' },
+    { type: 'roleplay', label: 'Roleplay vocal (Simulation d\'appel)', url: '/test/roleplay', duration: '~15 min', requiresStatus: 'interview' },
   ];
 
   async function init() {
@@ -88,23 +89,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       }
     });
 
-    // Check if all tests completed
-    const allCompleted = requiredTests.every(t => completedMap.has(t.type));
+    // Filter tests visible for this application status
+    const visibleTests = requiredTests.filter(t => {
+      if ((t as any).requiresStatus && app.status !== (t as any).requiresStatus) return false;
+      return true;
+    });
 
-    // Update application status if all tests done and status is pending/testing
-    if (allCompleted && (app.status === 'pending' || app.status === 'testing')) {
+    // Check if base tests (big_five, quiz) are completed
+    const baseTests = requiredTests.filter(t => !(t as any).requiresStatus);
+    const baseCompleted = baseTests.every(t => completedMap.has(t.type));
+
+    // Update application status if base tests done and status is pending/testing
+    if (baseCompleted && (app.status === 'pending' || app.status === 'testing')) {
       await supabase
         .from('applications')
         .update({ status: 'review' })
         .eq('id', app.id);
-    } else if (!allCompleted && app.status === 'pending') {
+    } else if (!baseCompleted && app.status === 'pending') {
       await supabase
         .from('applications')
         .update({ status: 'testing' })
         .eq('id', app.id);
     }
 
-    testsList.innerHTML = requiredTests.map(test => {
+    testsList.innerHTML = visibleTests.map(test => {
       const completed = completedMap.get(test.type);
       if (completed) {
         const date = new Date(completed.completed_at).toLocaleDateString('fr-FR');
@@ -113,7 +121,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <div class="card-body flex-row items-center justify-between">
               <div>
                 <h3 class="font-semibold text-base-content">${test.label}</h3>
-                <p class="text-sm text-base-content/60">Complété le ${date} — Score : ${completed.score}</p>
+                <p class="text-sm text-base-content/60">Complété le ${date}${completed.score != null ? ` — Score : ${completed.score}` : ''}</p>
               </div>
               <span class="badge badge-success">Terminé</span>
             </div>

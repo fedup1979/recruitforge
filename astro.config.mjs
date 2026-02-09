@@ -8,7 +8,6 @@ export default defineConfig({
   site: 'https://ambitia.io',
   integrations: [
     sentry({
-      dsn: process.env.PUBLIC_SENTRY_DSN || '',
       sourceMapsUploadOptions: {
         enabled: false,
       },
