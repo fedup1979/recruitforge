@@ -93,6 +93,92 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- Human scoring -->
+    <div class="card bg-base-200 mb-6" id="scoring-section">
+      <div class="card-body">
+        <h2 class="card-title text-base">Grille d'évaluation Roleplay</h2>
+        <p class="text-xs text-base-content/50 mb-3">Score chaque critère de 1 (faible) à 5 (excellent). Minimum pour avancer : 18/30.</p>
+        <div class="space-y-3" id="scoring-grid">
+          <div class="flex items-center justify-between gap-4" data-criterion="ouverture">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Ouverture</span><p class="text-xs text-base-content/40">Naturelle, chaleureuse</p></div>
+            <div class="rating rating-md" id="rating-ouverture">
+              <input type="radio" name="ouverture" class="rating-hidden" value="0" checked />
+              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-4" data-criterion="qualification">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Qualification</span><p class="text-xs text-base-content/40">Questions pertinentes, écoute</p></div>
+            <div class="rating rating-md" id="rating-qualification">
+              <input type="radio" name="qualification" class="rating-hidden" value="0" checked />
+              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-4" data-criterion="objections">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Gestion objections</span><p class="text-xs text-base-content/40">Répond avec assurance, rebondit</p></div>
+            <div class="rating rating-md" id="rating-objections">
+              <input type="radio" name="objections" class="rating-hidden" value="0" checked />
+              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-4" data-criterion="closing">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Closing</span><p class="text-xs text-base-content/40">Demande claire, assume</p></div>
+            <div class="rating rating-md" id="rating-closing">
+              <input type="radio" name="closing" class="rating-hidden" value="0" checked />
+              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-4" data-criterion="ton">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Ton général</span><p class="text-xs text-base-content/40">Chaleureux, souriant</p></div>
+            <div class="rating rating-md" id="rating-ton">
+              <input type="radio" name="ton" class="rating-hidden" value="0" checked />
+              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-4" data-criterion="ecoute">
+            <div class="min-w-[140px]"><span class="font-medium text-sm">Écoute</span><p class="text-xs text-base-content/40">Reformule, adapte</p></div>
+            <div class="rating rating-md" id="rating-ecoute">
+              <input type="radio" name="ecoute" class="rating-hidden" value="0" checked />
+              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="1" />
+              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="2" />
+              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="3" />
+              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="4" />
+              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="5" />
+            </div>
+          </div>
+        </div>
+        <div class="divider my-2"></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-sm font-bold">Total : </span>
+            <span id="score-total" class="text-lg font-bold text-primary">0</span>
+            <span class="text-sm text-base-content/50">/30</span>
+            <span id="score-verdict" class="badge badge-sm ml-2"></span>
+          </div>
+          <button id="save-score" class="btn btn-primary btn-sm">Enregistrer le score</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Notes -->
     <div class="card bg-base-200 mb-6">
       <div class="card-body">
@@ -286,7 +372,80 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           alert('Notes enregistrées.');
         }
       });
+
+      // Load existing human score
+      const existingHumanScore = testResults.find((t: any) => t.test_type === 'human_score');
+      if (existingHumanScore?.result_data) {
+        const scores = existingHumanScore.result_data as Record<string, number>;
+        const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
+        criteria.forEach(c => {
+          if (scores[c]) {
+            const radio = document.querySelector(`input[name="${c}"][value="${scores[c]}"]`) as HTMLInputElement;
+            if (radio) radio.checked = true;
+          }
+        });
+        updateScoreTotal();
+      }
     }
+
+    // Score calculation
+    function getScoreValues(): Record<string, number> {
+      const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
+      const scores: Record<string, number> = {};
+      criteria.forEach(c => {
+        const checked = document.querySelector(`input[name="${c}"]:checked`) as HTMLInputElement;
+        scores[c] = checked ? parseInt(checked.value) : 0;
+      });
+      return scores;
+    }
+
+    function updateScoreTotal() {
+      const scores = getScoreValues();
+      const total = Object.values(scores).reduce((a, b) => a + b, 0);
+      document.getElementById('score-total')!.textContent = String(total);
+      const verdict = document.getElementById('score-verdict')!;
+      if (total >= 25) {
+        verdict.textContent = 'Excellent';
+        verdict.className = 'badge badge-sm badge-success ml-2';
+      } else if (total >= 18) {
+        verdict.textContent = 'Acceptable';
+        verdict.className = 'badge badge-sm badge-info ml-2';
+      } else if (total > 0) {
+        verdict.textContent = 'Insuffisant';
+        verdict.className = 'badge badge-sm badge-error ml-2';
+      } else {
+        verdict.textContent = '';
+        verdict.className = 'badge badge-sm ml-2';
+      }
+    }
+
+    // Listen for rating changes
+    document.querySelectorAll('#scoring-grid input[type="radio"]').forEach(input => {
+      input.addEventListener('change', updateScoreTotal);
+    });
+
+    // Save score
+    document.getElementById('save-score')!.addEventListener('click', async () => {
+      const scores = getScoreValues();
+      const total = Object.values(scores).reduce((a, b) => a + b, 0);
+      const pct = Math.round((total / 30) * 100);
+
+      const { error: scoreError } = await supabase
+        .from('test_results')
+        .upsert({
+          application_id: appId,
+          test_type: 'human_score',
+          score: pct,
+          result_data: scores,
+          completed_at: new Date().toISOString(),
+        }, { onConflict: 'application_id,test_type' });
+
+      if (scoreError) {
+        alert('Erreur: ' + scoreError.message);
+      } else {
+        alert(`Score enregistré : ${total}/30 (${pct}%)`);
+      }
+    });
 
     loadDetail();
   </script>

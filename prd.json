@@ -396,7 +396,7 @@
       "id": "S4-006",
       "title": "Add human scoring interface",
       "priority": 29,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Scoring component on candidate detail page",
         "Score grid matching SCORECARD (6 criteria, 1-5 each)",
