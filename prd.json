@@ -641,7 +641,7 @@
       "id": "S6-007",
       "title": "Final pre-launch checklist",
       "priority": 47,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "All pages load without errors",
         "Auth flow works end-to-end",
