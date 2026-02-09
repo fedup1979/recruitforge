@@ -1,0 +1,235 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Test de personnalité — AMBITIA" description="Complétez le test Big Five pour évaluer votre profil.">
+  <!-- Consent Modal -->
+  <dialog id="consent-modal" class="modal modal-open">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Consentement — Test de personnalité</h3>
+      <p class="py-4 text-sm text-base-content/80">
+        Ce test établit un profil de personnalité utilisé pour évaluer votre compatibilité avec le poste. Vos résultats ne seront pas partagés avec des tiers. En continuant, vous acceptez ce traitement.
+      </p>
+      <div class="form-control">
+        <label class="label cursor-pointer justify-start gap-3">
+          <input type="checkbox" id="consent-checkbox" class="checkbox checkbox-primary" />
+          <span class="label-text">J'accepte le test de personnalité</span>
+        </label>
+      </div>
+      <div class="modal-action">
+        <a href="/dashboard" class="btn btn-ghost">Annuler</a>
+        <button id="consent-accept" class="btn btn-primary" disabled>Commencer le test</button>
+      </div>
+    </div>
+  </dialog>
+
+  <section class="py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Test content -->
+      <div id="test-content" class="hidden">
+        <h1 class="text-2xl font-bold text-base-content mb-2">Test de personnalité (Big Five)</h1>
+        <p class="text-base-content/60 mb-6">Indiquez dans quelle mesure chaque affirmation vous correspond.</p>
+
+        <!-- Progress -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-base-content/50">Question <span id="current-q">1</span>/10</span>
+          <span class="text-sm font-medium text-primary" id="progress-pct">0%</span>
+        </div>
+        <progress id="test-progress" class="progress progress-primary w-full mb-8" value="0" max="100"></progress>
+
+        <!-- Question -->
+        <div id="question-container">
+          <p id="question-text" class="text-lg font-medium text-base-content mb-6"></p>
+          <div class="space-y-3" id="answer-options">
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="1" class="radio radio-primary" />
+              <span>1 — Pas du tout d'accord</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="2" class="radio radio-primary" />
+              <span>2 — Pas d'accord</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="3" class="radio radio-primary" />
+              <span>3 — Légèrement pas d'accord</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="4" class="radio radio-primary" />
+              <span>4 — Neutre</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="5" class="radio radio-primary" />
+              <span>5 — Légèrement d'accord</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="6" class="radio radio-primary" />
+              <span>6 — D'accord</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
+              <input type="radio" name="answer" value="7" class="radio radio-primary" />
+              <span>7 — Tout à fait d'accord</span>
+            </label>
+          </div>
+          <button id="next-btn" class="btn btn-primary w-full mt-6" disabled>Suivant</button>
+        </div>
+
+        <!-- Completed state -->
+        <div id="completed" class="text-center py-8 hidden">
+          <div class="text-5xl mb-4">&#10003;</div>
+          <h2 class="text-2xl font-bold text-base-content mb-2">Test terminé !</h2>
+          <p class="text-base-content/60 mb-6">Vos résultats ont été enregistrés.</p>
+          <a href="/dashboard" class="btn btn-primary">Retour au tableau de bord</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  // TIPI-10 questions (Ten-Item Personality Inventory, French)
+  const questions = [
+    { id: 1, text: 'Je me vois comme quelqu\'un d\'extraverti, enthousiaste.', trait: 'E', reverse: false },
+    { id: 2, text: 'Je me vois comme quelqu\'un de critique, querelleur.', trait: 'A', reverse: true },
+    { id: 3, text: 'Je me vois comme quelqu\'un de fiable, discipliné.', trait: 'C', reverse: false },
+    { id: 4, text: 'Je me vois comme quelqu\'un d\'anxieux, facilement perturbé.', trait: 'N', reverse: false },
+    { id: 5, text: 'Je me vois comme quelqu\'un d\'ouvert aux expériences nouvelles, complexe.', trait: 'O', reverse: false },
+    { id: 6, text: 'Je me vois comme quelqu\'un de réservé, discret.', trait: 'E', reverse: true },
+    { id: 7, text: 'Je me vois comme quelqu\'un de sympathique, chaleureux.', trait: 'A', reverse: false },
+    { id: 8, text: 'Je me vois comme quelqu\'un de désorganisé, négligent.', trait: 'C', reverse: true },
+    { id: 9, text: 'Je me vois comme quelqu\'un de calme, émotionnellement stable.', trait: 'N', reverse: true },
+    { id: 10, text: 'Je me vois comme quelqu\'un de conventionnel, peu créatif.', trait: 'O', reverse: true },
+  ];
+
+  const consentModal = document.getElementById('consent-modal') as HTMLDialogElement;
+  const consentCheckbox = document.getElementById('consent-checkbox') as HTMLInputElement;
+  const consentAccept = document.getElementById('consent-accept') as HTMLButtonElement;
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const testContent = document.getElementById('test-content') as HTMLDivElement;
+  const questionText = document.getElementById('question-text') as HTMLParagraphElement;
+  const currentQSpan = document.getElementById('current-q') as HTMLSpanElement;
+  const progressPct = document.getElementById('progress-pct') as HTMLSpanElement;
+  const testProgress = document.getElementById('test-progress') as HTMLProgressElement;
+  const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+  const completedDiv = document.getElementById('completed') as HTMLDivElement;
+  const questionContainer = document.getElementById('question-container') as HTMLDivElement;
+
+  let currentQuestion = 0;
+  const answers: Record<number, number> = {};
+  let applicationId: string | null = null;
+
+  // Get applicationId from URL query params
+  const params = new URLSearchParams(window.location.search);
+  applicationId = params.get('app');
+
+  consentCheckbox?.addEventListener('change', () => {
+    consentAccept.disabled = !consentCheckbox.checked;
+  });
+
+  consentAccept?.addEventListener('click', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    // Save consent
+    await supabase.from('consents').insert({
+      user_id: session.user.id,
+      consent_type: 'big_five_test',
+      granted: true,
+      granted_at: new Date().toISOString(),
+    });
+
+    consentModal.classList.remove('modal-open');
+    consentModal.close();
+    showQuestion();
+  });
+
+  function showQuestion() {
+    if (currentQuestion >= questions.length) {
+      submitTest();
+      return;
+    }
+
+    const q = questions[currentQuestion];
+    questionText.textContent = q.text;
+    currentQSpan.textContent = String(currentQuestion + 1);
+
+    const pct = Math.round((currentQuestion / questions.length) * 100);
+    progressPct.textContent = `${pct}%`;
+    testProgress.value = pct;
+
+    // Clear radio selection
+    document.querySelectorAll<HTMLInputElement>('input[name="answer"]').forEach(r => r.checked = false);
+    nextBtn.disabled = true;
+  }
+
+  // Enable next button when answer selected
+  document.querySelectorAll<HTMLInputElement>('input[name="answer"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      nextBtn.disabled = false;
+    });
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    const selected = document.querySelector<HTMLInputElement>('input[name="answer"]:checked');
+    if (!selected) return;
+
+    answers[questions[currentQuestion].id] = parseInt(selected.value);
+    currentQuestion++;
+    showQuestion();
+  });
+
+  async function submitTest() {
+    questionContainer.classList.add('hidden');
+    testProgress.value = 100;
+    progressPct.textContent = '100%';
+
+    // Calculate Big Five scores
+    const scores: Record<string, number> = { E: 0, A: 0, C: 0, N: 0, O: 0 };
+    questions.forEach(q => {
+      const val = answers[q.id] || 4;
+      scores[q.trait] += q.reverse ? (8 - val) : val;
+    });
+    // Average per trait (2 items each)
+    Object.keys(scores).forEach(k => { scores[k] = Math.round((scores[k] / 2) * 100) / 100; });
+
+    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+
+    if (applicationId) {
+      await supabase.from('test_results').insert({
+        application_id: applicationId,
+        test_type: 'big_five',
+        answers,
+        score: totalScore,
+        completed_at: new Date().toISOString(),
+      });
+    }
+
+    completedDiv.classList.remove('hidden');
+  }
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    if (!applicationId) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    loadingDiv.classList.add('hidden');
+    testContent.classList.remove('hidden');
+  }
+
+  init();
+</script>
