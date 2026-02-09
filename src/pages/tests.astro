@@ -1,0 +1,138 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mes tests — AMBITIA" description="Visualisez et complétez vos tests de recrutement.">
+  <section class="py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Content -->
+      <div id="tests-content" class="hidden">
+        <h1 class="text-3xl font-bold text-base-content mb-2">Mes tests</h1>
+        <p class="text-base-content/60 mb-8">Complétez les tests ci-dessous pour avancer dans votre candidature.</p>
+
+        <div id="tests-list" class="space-y-4">
+          <!-- Populated by JS -->
+        </div>
+
+        <div id="no-app" class="text-center py-16 hidden">
+          <p class="text-base-content/50">Aucune candidature active trouvée.</p>
+          <a href="/jobs" class="btn btn-primary mt-4">Voir les postes</a>
+        </div>
+
+        <a href="/dashboard" class="btn btn-ghost btn-sm mt-8 gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour au tableau de bord
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const testsContent = document.getElementById('tests-content') as HTMLDivElement;
+  const testsList = document.getElementById('tests-list') as HTMLDivElement;
+  const noAppDiv = document.getElementById('no-app') as HTMLDivElement;
+
+  const requiredTests = [
+    { type: 'big_five', label: 'Test de personnalité (Big Five)', url: '/test/bigfive', duration: '~10 min' },
+    { type: 'quiz', label: 'Quiz Formation ESSR', url: '/test/quiz', duration: '~10 min' },
+  ];
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    // Get latest application
+    const { data: applications } = await supabase
+      .from('applications')
+      .select('id, status, job_id')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    loadingDiv.classList.add('hidden');
+    testsContent.classList.remove('hidden');
+
+    if (!applications || applications.length === 0) {
+      noAppDiv.classList.remove('hidden');
+      return;
+    }
+
+    const app = applications[0];
+
+    // Get completed tests
+    const { data: results } = await supabase
+      .from('test_results')
+      .select('test_type, score, completed_at')
+      .eq('application_id', app.id);
+
+    const completedMap = new Map<string, { score: number; completed_at: string }>();
+    results?.forEach((r: any) => {
+      if (r.completed_at) {
+        completedMap.set(r.test_type, { score: r.score, completed_at: r.completed_at });
+      }
+    });
+
+    // Check if all tests completed
+    const allCompleted = requiredTests.every(t => completedMap.has(t.type));
+
+    // Update application status if all tests done and status is pending/testing
+    if (allCompleted && (app.status === 'pending' || app.status === 'testing')) {
+      await supabase
+        .from('applications')
+        .update({ status: 'review' })
+        .eq('id', app.id);
+    } else if (!allCompleted && app.status === 'pending') {
+      await supabase
+        .from('applications')
+        .update({ status: 'testing' })
+        .eq('id', app.id);
+    }
+
+    testsList.innerHTML = requiredTests.map(test => {
+      const completed = completedMap.get(test.type);
+      if (completed) {
+        const date = new Date(completed.completed_at).toLocaleDateString('fr-FR');
+        return `
+          <div class="card bg-base-200 shadow-sm">
+            <div class="card-body flex-row items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-base-content">${test.label}</h3>
+                <p class="text-sm text-base-content/60">Complété le ${date} — Score : ${completed.score}</p>
+              </div>
+              <span class="badge badge-success">Terminé</span>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="card bg-base-200 shadow-sm">
+          <div class="card-body flex-row items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-base-content">${test.label}</h3>
+              <p class="text-sm text-base-content/60">Durée : ${test.duration}</p>
+            </div>
+            <a href="${test.url}?app=${app.id}" class="btn btn-primary btn-sm">Commencer</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  init();
+</script>
