@@ -1,0 +1,176 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Mon profil — AMBITIA" description="Modifiez vos informations personnelles.">
+  <section class="py-12 px-4">
+    <div class="max-w-md mx-auto">
+      <!-- Loading state -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Profile form (hidden until auth check) -->
+      <div id="profile-content" class="hidden">
+        <h1 class="text-3xl font-bold text-base-content mb-8">Mon profil</h1>
+
+        <!-- Toast messages -->
+        <div id="toast-success" class="alert alert-success mb-4 hidden">
+          <span>Profil mis à jour avec succès.</span>
+        </div>
+        <div id="toast-error" class="alert alert-error mb-4 hidden">
+          <span id="toast-error-text"></span>
+        </div>
+
+        <form id="profile-form" class="space-y-4">
+          <div class="form-control">
+            <label class="label" for="full_name">
+              <span class="label-text">Nom complet</span>
+            </label>
+            <input type="text" id="full_name" name="full_name" class="input input-bordered w-full" required />
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="phone">
+              <span class="label-text">Téléphone (WhatsApp)</span>
+            </label>
+            <input type="tel" id="phone" name="phone" placeholder="+261 34 00 000 00" class="input input-bordered w-full" />
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="country">
+              <span class="label-text">Pays</span>
+            </label>
+            <select id="country" name="country" class="select select-bordered w-full">
+              <option value="">Sélectionnez votre pays</option>
+              <option value="MG">Madagascar</option>
+              <option value="MA">Maroc</option>
+              <option value="SN">Sénégal</option>
+              <option value="CI">Côte d'Ivoire</option>
+              <option value="CM">Cameroun</option>
+              <option value="CD">République Démocratique du Congo</option>
+              <option value="TN">Tunisie</option>
+              <option value="DZ">Algérie</option>
+              <option value="ML">Mali</option>
+              <option value="BF">Burkina Faso</option>
+              <option value="GN">Guinée</option>
+              <option value="BJ">Bénin</option>
+              <option value="TG">Togo</option>
+              <option value="GA">Gabon</option>
+              <option value="CG">Congo</option>
+              <option value="MU">Maurice</option>
+              <option value="OTHER">Autre</option>
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label" for="email">
+              <span class="label-text">Email</span>
+            </label>
+            <input type="email" id="email" name="email" class="input input-bordered w-full" disabled />
+            <label class="label">
+              <span class="label-text-alt text-base-content/50">L'email ne peut pas être modifié.</span>
+            </label>
+          </div>
+
+          <button type="submit" id="save-btn" class="btn btn-primary w-full">
+            Enregistrer
+          </button>
+        </form>
+
+        <div class="mt-6">
+          <a href="/dashboard" class="btn btn-ghost btn-sm gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour au tableau de bord
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const contentDiv = document.getElementById('profile-content') as HTMLDivElement;
+  const toastSuccess = document.getElementById('toast-success') as HTMLDivElement;
+  const toastError = document.getElementById('toast-error') as HTMLDivElement;
+  const toastErrorText = document.getElementById('toast-error-text') as HTMLSpanElement;
+
+  const fullNameInput = document.getElementById('full_name') as HTMLInputElement;
+  const phoneInput = document.getElementById('phone') as HTMLInputElement;
+  const countrySelect = document.getElementById('country') as HTMLSelectElement;
+  const emailInput = document.getElementById('email') as HTMLInputElement;
+  const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+
+    emailInput.value = session.user.email || '';
+
+    // Load profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, phone, country')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile) {
+      fullNameInput.value = profile.full_name || '';
+      phoneInput.value = profile.phone || '';
+      countrySelect.value = profile.country || '';
+    }
+
+    loadingDiv.classList.add('hidden');
+    contentDiv.classList.remove('hidden');
+  }
+
+  document.getElementById('profile-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    saveBtn.classList.add('loading');
+    saveBtn.disabled = true;
+    toastSuccess.classList.add('hidden');
+    toastError.classList.add('hidden');
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: fullNameInput.value,
+        phone: phoneInput.value,
+        country: countrySelect.value,
+      })
+      .eq('id', session.user.id);
+
+    saveBtn.classList.remove('loading');
+    saveBtn.disabled = false;
+
+    if (error) {
+      toastErrorText.textContent = error.message;
+      toastError.classList.remove('hidden');
+    } else {
+      toastSuccess.classList.remove('hidden');
+      setTimeout(() => toastSuccess.classList.add('hidden'), 3000);
+    }
+  });
+
+  init();
+</script>
