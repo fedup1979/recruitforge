@@ -98,19 +98,50 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       pool: { label: 'En vivier', class: 'badge-neutral' },
     };
 
+    const steps = ['pending', 'testing', 'review', 'interview', 'hired'];
+    const stepLabels = ['Candidature', 'Tests', 'Review', 'Entretien', 'Décision'];
+
+    function getStepIndex(appStatus: string): number {
+      if (appStatus === 'hired' || appStatus === 'rejected' || appStatus === 'pool') return 4;
+      const idx = steps.indexOf(appStatus);
+      return idx >= 0 ? idx : 0;
+    }
+
+    function getPercentage(appStatus: string): number {
+      const idx = getStepIndex(appStatus);
+      return Math.round(((idx + 1) / steps.length) * 100);
+    }
+
     applicationsList.innerHTML = applications.map((app: any) => {
       const job = app.jobs;
       const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
       const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+      const currentStep = getStepIndex(app.status);
+      const pct = getPercentage(app.status);
+
+      const stepsHtml = stepLabels.map((label, i) => {
+        const active = i <= currentStep ? 'step-primary' : '';
+        return `<li class="step ${active}">${label}</li>`;
+      }).join('');
+
       return `
         <div class="card bg-base-200 shadow-sm mb-4">
           <div class="card-body">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
               <div>
                 <h3 class="font-semibold text-base-content">${job?.title || 'Poste'}</h3>
                 <p class="text-sm text-base-content/60">${job?.salary_label || ''} &middot; Postulé le ${date}</p>
               </div>
               <span class="badge ${status.class}">${status.label}</span>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-base-content/50">Progression</span>
+                <span class="text-xs font-medium text-primary">${pct}%</span>
+              </div>
+              <ul class="steps steps-horizontal w-full text-xs">
+                ${stepsHtml}
+              </ul>
             </div>
           </div>
         </div>

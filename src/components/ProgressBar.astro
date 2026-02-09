@@ -1,0 +1,17 @@
+---
+/**
+ * Application progress bar component.
+ * Renders a step indicator showing where the candidate is in the recruitment process.
+ * Used client-side: pass data-status attribute and JS will highlight the correct step.
+ */
+---
+
+<div class="progress-bar-wrapper">
+  <ul class="steps steps-horizontal w-full text-xs">
+    <li class="step" data-step="pending">Candidature</li>
+    <li class="step" data-step="testing">Tests</li>
+    <li class="step" data-step="review">Review</li>
+    <li class="step" data-step="interview">Entretien</li>
+    <li class="step" data-step="decision">Décision</li>
+  </ul>
+</div>
