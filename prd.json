@@ -7,7 +7,7 @@
       "id": "S1-001",
       "title": "Initialize Astro project with DaisyUI",
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "Astro project initialized with `npm create astro@latest`",
         "Tailwind CSS installed and configured",

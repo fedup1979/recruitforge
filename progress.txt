@@ -21,4 +21,29 @@
 5. Theme colors: primary #2D5BFF, secondary #6C5CE7, accent #00D9A3
 
 ---
+
+## Codebase Patterns
+- Tailwind CSS v4 + DaisyUI 5: config is done in CSS via `@plugin "daisyui"` and `@plugin "daisyui/theme"` directives, NOT in tailwind.config.mjs
+- Font override: use `@theme { --font-sans: "Inter", ... }` in global.css for Tailwind v4
+- Global CSS import: each page/layout must `import '../styles/global.css'` in frontmatter
+- DaisyUI theme activation: add `data-theme="ambitia"` to `<html>` element
+- Astro project uses static output mode by default (good for GitHub Pages)
+
+---
 # Iteration Logs (append below)
+
+## 2026-02-09 - S1-001
+- Initialized Astro project (v5.17) with minimal template
+- Installed Tailwind CSS v4.1.18 via `npx astro add tailwind`
+- Installed DaisyUI v5.5.18
+- Created custom 'ambitia' theme with oklch colors matching: primary #2D5BFF, secondary #6C5CE7, accent #00D9A3, neutral #1A1D29
+- Configured Inter font from Google Fonts (preconnect + stylesheet link)
+- Set `--font-sans` theme variable for Tailwind v4
+- Files changed: package.json, astro.config.mjs, tsconfig.json, src/styles/global.css, src/pages/index.astro
+- **Learnings for future iterations:**
+  - Astro `create astro` won't initialize in a non-empty directory; use temp dir + copy
+  - Tailwind v4 uses `@theme` directives in CSS instead of tailwind.config.mjs
+  - DaisyUI 5 uses `@plugin "daisyui/theme"` in CSS for theme definition
+  - oklch color space required for DaisyUI 5 theme colors
+  - Build warning about `@property` in DaisyUI CSS is benign
+---
