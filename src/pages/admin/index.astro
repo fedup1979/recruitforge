@@ -10,6 +10,13 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     <span class="loading loading-spinner loading-lg text-primary"></span>
   </div>
 
+  <!-- Error state -->
+  <div id="error-state" class="hidden">
+    <div class="alert alert-error mb-4">
+      <span id="error-detail"></span>
+    </div>
+  </div>
+
   <div id="stats-content" class="hidden">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
       <div class="stat bg-base-200 rounded-box">
@@ -53,75 +60,87 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     );
 
     async function loadStats() {
-      // Total candidates
-      const { count: totalCandidates } = await supabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true });
+      try {
+        // Total candidates
+        const { count: totalCandidates, error: e1 } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true });
 
-      // Pending review
-      const { count: pendingReview } = await supabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['pending', 'testing']);
+        if (e1) throw new Error('applications count: ' + e1.message);
 
-      // Hired this month
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const { count: hiredMonth } = await supabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'hired')
-        .gte('updated_at', firstOfMonth);
+        // Pending review
+        const { count: pendingReview } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['pending', 'testing']);
 
-      document.getElementById('stat-total')!.textContent = String(totalCandidates || 0);
-      document.getElementById('stat-pending')!.textContent = String(pendingReview || 0);
-      document.getElementById('stat-hired')!.textContent = String(hiredMonth || 0);
+        // Hired this month
+        const now = new Date();
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const { count: hiredMonth } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'hired')
+          .gte('updated_at', firstOfMonth);
 
-      // Recent applications
-      const { data: recentApps } = await supabase
-        .from('applications')
-        .select('id, status, created_at, profiles(full_name, email), jobs(title, country)')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        document.getElementById('stat-total')!.textContent = String(totalCandidates || 0);
+        document.getElementById('stat-pending')!.textContent = String(pendingReview || 0);
+        document.getElementById('stat-hired')!.textContent = String(hiredMonth || 0);
 
-      const recentDiv = document.getElementById('recent-apps')!;
-      const noAppsDiv = document.getElementById('no-apps')!;
+        // Recent applications
+        const { data: recentApps, error: e2 } = await supabase
+          .from('applications')
+          .select('id, status, created_at, profiles(full_name, email), jobs(title, country)')
+          .order('created_at', { ascending: false })
+          .limit(10);
 
-      if (!recentApps || recentApps.length === 0) {
-        noAppsDiv.classList.remove('hidden');
-      } else {
-        const statusLabels: Record<string, { label: string; class: string }> = {
-          pending: { label: 'En attente', class: 'badge-warning' },
-          testing: { label: 'Tests', class: 'badge-info' },
-          review: { label: 'Review', class: 'badge-secondary' },
-          interview: { label: 'Entretien', class: 'badge-accent' },
-          hired: { label: 'Embauché', class: 'badge-success' },
-          rejected: { label: 'Refusé', class: 'badge-error' },
-          pool: { label: 'Vivier', class: 'badge-neutral' },
-        };
+        if (e2) throw new Error('recent apps: ' + e2.message);
 
-        recentDiv.innerHTML = recentApps.map((app: any) => {
-          const profile = app.profiles;
-          const job = app.jobs;
-          const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
-          const date = new Date(app.created_at).toLocaleDateString('fr-FR');
-          return `
-            <div class="flex items-center justify-between bg-base-200 rounded-box p-3">
-              <div>
-                <span class="font-medium">${profile?.full_name || profile?.email || 'Candidat'}</span>
-                <span class="text-sm text-base-content/50 ml-2">${job?.title || ''} (${job?.country || ''})</span>
+        const recentDiv = document.getElementById('recent-apps')!;
+        const noAppsDiv = document.getElementById('no-apps')!;
+
+        if (!recentApps || recentApps.length === 0) {
+          noAppsDiv.classList.remove('hidden');
+        } else {
+          const statusLabels: Record<string, { label: string; class: string }> = {
+            pending: { label: 'En attente', class: 'badge-warning' },
+            testing: { label: 'Tests', class: 'badge-info' },
+            review: { label: 'Review', class: 'badge-secondary' },
+            interview: { label: 'Entretien', class: 'badge-accent' },
+            hired: { label: 'Embauché', class: 'badge-success' },
+            rejected: { label: 'Refusé', class: 'badge-error' },
+            pool: { label: 'Vivier', class: 'badge-neutral' },
+          };
+
+          recentDiv.innerHTML = recentApps.map((app: any) => {
+            const profile = app.profiles;
+            const job = app.jobs;
+            const status = statusLabels[app.status] || { label: app.status, class: 'badge-ghost' };
+            const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+            return `
+              <div class="flex items-center justify-between bg-base-200 rounded-box p-3">
+                <div>
+                  <span class="font-medium">${profile?.full_name || profile?.email || 'Candidat'}</span>
+                  <span class="text-sm text-base-content/50 ml-2">${job?.title || ''} (${job?.country || ''})</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-base-content/40">${date}</span>
+                  <span class="badge badge-sm ${status.class}">${status.label}</span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-base-content/40">${date}</span>
-                <span class="badge badge-sm ${status.class}">${status.label}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
+            `;
+          }).join('');
+        }
+
+        document.getElementById('stats-loading')!.classList.add('hidden');
+        document.getElementById('stats-content')!.classList.remove('hidden');
+      } catch (err: any) {
+        document.getElementById('stats-loading')!.classList.add('hidden');
+        document.getElementById('error-state')!.classList.remove('hidden');
+        document.getElementById('error-detail')!.textContent = 'Erreur: ' + (err.message || err);
+        // Still show the stats content so quick links are accessible
+        document.getElementById('stats-content')!.classList.remove('hidden');
       }
-
-      document.getElementById('stats-loading')!.classList.add('hidden');
-      document.getElementById('stats-content')!.classList.remove('hidden');
     }
 
     loadStats();

@@ -109,14 +109,20 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     };
 
     async function loadJobs() {
-      const { data: jobs } = await supabase
+      const { data: jobs, error } = await supabase
         .from('jobs')
         .select('*, applications(count)')
         .order('title', { ascending: true });
 
-      allJobs = jobs || [];
-
       document.getElementById('loading')!.classList.add('hidden');
+
+      if (error) {
+        document.getElementById('no-jobs')!.classList.remove('hidden');
+        document.getElementById('no-jobs')!.textContent = 'Erreur de chargement: ' + error.message;
+        return;
+      }
+
+      allJobs = jobs || [];
 
       if (allJobs.length === 0) {
         document.getElementById('no-jobs')!.classList.remove('hidden');
