@@ -470,7 +470,7 @@
       "id": "S4-011",
       "title": "Add kanban view for candidates",
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/admin/candidates?view=kanban toggle on candidates page",
         "Columns: Pending → Testing → Review → Interview → Hired/Rejected/Pool",

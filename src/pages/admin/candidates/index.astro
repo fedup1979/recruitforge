@@ -4,7 +4,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
 <AdminLayout title="Candidats — AMBITIA Admin">
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <h1 class="text-2xl font-bold text-base-content">Candidats</h1>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold text-base-content">Candidats</h1>
+      <div class="join">
+        <button class="btn btn-sm join-item btn-primary" id="view-table">Table</button>
+        <button class="btn btn-sm join-item" id="view-kanban">Kanban</button>
+      </div>
+    </div>
     <input
       type="text"
       id="search-input"
@@ -98,6 +104,13 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     </div>
   </div>
 
+  <!-- Kanban view -->
+  <div id="kanban-container" class="hidden">
+    <div class="flex gap-4 overflow-x-auto pb-4" id="kanban-board">
+      <!-- Columns populated by JS -->
+    </div>
+  </div>
+
   <script>
     import { createClient } from '@supabase/supabase-js';
     const supabase = createClient(
@@ -109,6 +122,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     let allApplications: any[] = [];
     let filteredApps: any[] = [];
     let currentPage = 1;
+    let currentView: 'table' | 'kanban' = 'table';
 
     const statusLabels: Record<string, { label: string; class: string }> = {
       pending: { label: 'En attente', class: 'badge-warning' },
@@ -154,7 +168,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       });
 
       document.getElementById('loading')!.classList.add('hidden');
-      document.getElementById('table-container')!.classList.remove('hidden');
+      if (currentView === 'kanban') {
+        document.getElementById('kanban-container')!.classList.remove('hidden');
+      } else {
+        document.getElementById('table-container')!.classList.remove('hidden');
+      }
 
       applyFilters();
     }
@@ -210,7 +228,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       });
 
       currentPage = 1;
-      renderTable();
+      if (currentView === 'kanban') {
+        renderKanban();
+      } else {
+        renderTable();
+      }
     }
 
     function renderTable() {
@@ -406,6 +428,93 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       document.getElementById('bulk-toolbar')!.classList.add('hidden');
       loadData();
     });
+
+    // Kanban rendering
+    const kanbanColumns = [
+      { key: 'pending', label: 'En attente', class: 'border-warning' },
+      { key: 'testing', label: 'Tests', class: 'border-info' },
+      { key: 'review', label: 'Review', class: 'border-secondary' },
+      { key: 'interview', label: 'Entretien', class: 'border-accent' },
+      { key: 'hired', label: 'Embauché', class: 'border-success' },
+      { key: 'rejected', label: 'Refusé', class: 'border-error' },
+      { key: 'pool', label: 'Vivier', class: 'border-neutral' },
+    ];
+
+    function renderKanban() {
+      const board = document.getElementById('kanban-board')!;
+      board.innerHTML = kanbanColumns.map(col => {
+        const apps = filteredApps.filter(a => a.status === col.key);
+        const cards = apps.map(app => {
+          const profile = app.profiles;
+          const score = getScore(app);
+          const date = new Date(app.created_at).toLocaleDateString('fr-FR');
+          return `
+            <div class="card bg-base-100 shadow-sm cursor-pointer kanban-card" data-app-id="${app.id}">
+              <div class="card-body p-3">
+                <p class="font-medium text-sm">${profile?.full_name || '—'}</p>
+                <p class="text-xs text-base-content/50">${profile?.country || ''}</p>
+                <div class="flex justify-between items-center mt-1">
+                  ${score !== null ? `<span class="badge badge-xs badge-primary">${score}%</span>` : '<span></span>'}
+                  <span class="text-xs text-base-content/40">${date}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="min-w-[200px] flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-sm">${col.label}</h3>
+              <span class="badge badge-sm">${apps.length}</span>
+            </div>
+            <div class="space-y-2 border-t-2 ${col.class} pt-3 min-h-[100px]">
+              ${cards || '<p class="text-xs text-base-content/30 text-center">Vide</p>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Card click handlers
+      board.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const appId = card.getAttribute('data-app-id');
+          window.location.href = `/admin/candidates/detail?id=${appId}`;
+        });
+      });
+    }
+
+    function switchView(view: 'table' | 'kanban') {
+      currentView = view;
+      const tableBtn = document.getElementById('view-table')!;
+      const kanbanBtn = document.getElementById('view-kanban')!;
+      const tableContainer = document.getElementById('table-container')!;
+      const kanbanContainer = document.getElementById('kanban-container')!;
+      const bulkToolbar = document.getElementById('bulk-toolbar')!;
+
+      if (view === 'table') {
+        tableBtn.classList.add('btn-primary');
+        kanbanBtn.classList.remove('btn-primary');
+        tableContainer.classList.remove('hidden');
+        kanbanContainer.classList.add('hidden');
+        renderTable();
+      } else {
+        tableBtn.classList.remove('btn-primary');
+        kanbanBtn.classList.add('btn-primary');
+        tableContainer.classList.add('hidden');
+        kanbanContainer.classList.remove('hidden');
+        bulkToolbar.classList.add('hidden');
+        renderKanban();
+      }
+    }
+
+    document.getElementById('view-table')!.addEventListener('click', () => switchView('table'));
+    document.getElementById('view-kanban')!.addEventListener('click', () => switchView('kanban'));
+
+    // Check URL for initial view
+    if (new URLSearchParams(window.location.search).get('view') === 'kanban') {
+      currentView = 'kanban';
+    }
 
     // Event listeners
     document.getElementById('search-input')!.addEventListener('input', applyFilters);
