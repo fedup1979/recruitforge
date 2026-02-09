@@ -84,10 +84,9 @@ const { job } = Astro.props;
 
       <!-- CTA -->
       <div class="text-center">
-        <button class="btn btn-primary btn-lg btn-disabled" disabled>
+        <a href={`/apply/${job.id}`} class="btn btn-primary btn-lg">
           Postuler
-        </button>
-        <p class="text-sm text-base-content/50 mt-2">Les candidatures ouvriront bientôt.</p>
+        </a>
       </div>
     </div>
   </section>

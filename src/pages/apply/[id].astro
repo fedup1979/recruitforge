@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { jobs } from '../../data/jobs';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return jobs.map((job) => ({
+    params: { id: job.id },
+    props: { job },
+  }));
+};
+
+const { job } = Astro.props;
+---
+
+<BaseLayout title={`Postuler — ${job.title} — AMBITIA`} description={`Postulez au poste ${job.title} chez AMBITIA.`}>
+  <section class="py-12 px-4">
+    <div class="max-w-lg mx-auto">
+      <!-- Loading state -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Form content -->
+      <div id="form-content" class="hidden">
+        <!-- Job summary -->
+        <div class="bg-base-200 rounded-xl p-4 mb-8">
+          <h2 class="font-semibold text-base-content">{job.title}</h2>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <span class="badge badge-sm badge-outline gap-1">
+              <span>{job.countryFlag}</span> {job.countryName}
+            </span>
+            <span class="badge badge-sm badge-primary">{job.salary_label}</span>
+          </div>
+        </div>
+
+        <h1 class="text-2xl font-bold text-base-content mb-6">Postuler</h1>
+
+        <!-- Messages -->
+        <div id="msg-error" class="alert alert-error mb-4 hidden">
+          <span id="msg-error-text"></span>
+        </div>
+
+        <!-- Knockout questions -->
+        <form id="apply-form" class="space-y-6">
+          <input type="hidden" id="job-id" value={job.id} />
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Êtes-vous disponible pour travailler du lundi au vendredi, 9h-18h (heure de Paris) ?</span>
+            </label>
+            <div class="flex gap-4 mt-1">
+              <label class="label cursor-pointer gap-2">
+                <input type="radio" name="availability" value="yes" class="radio radio-primary" required />
+                <span class="label-text">Oui</span>
+              </label>
+              <label class="label cursor-pointer gap-2">
+                <input type="radio" name="availability" value="no" class="radio radio-primary" />
+                <span class="label-text">Non</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Avez-vous une connexion internet stable (min 10 Mbps) ?</span>
+            </label>
+            <div class="flex gap-4 mt-1">
+              <label class="label cursor-pointer gap-2">
+                <input type="radio" name="internet" value="yes" class="radio radio-primary" required />
+                <span class="label-text">Oui</span>
+              </label>
+              <label class="label cursor-pointer gap-2">
+                <input type="radio" name="internet" value="no" class="radio radio-primary" />
+                <span class="label-text">Non</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Quel est votre niveau de français ?</span>
+            </label>
+            <select name="french_level" class="select select-bordered w-full" required>
+              <option value="">Sélectionnez</option>
+              <option value="native">Langue maternelle</option>
+              <option value="fluent">Courant (C1-C2)</option>
+              <option value="intermediate">Intermédiaire (B1-B2)</option>
+              <option value="beginner">Débutant (A1-A2)</option>
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Avez-vous de l'expérience en appel téléphonique ou call center ?</span>
+            </label>
+            <select name="call_experience" class="select select-bordered w-full" required>
+              <option value="">Sélectionnez</option>
+              <option value="yes_2plus">Oui, plus de 2 ans</option>
+              <option value="yes_1">Oui, 1-2 ans</option>
+              <option value="yes_less1">Oui, moins d'1 an</option>
+              <option value="no">Non, pas d'expérience</option>
+            </select>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-primary w-full btn-lg">
+            Envoyer ma candidature
+          </button>
+        </form>
+
+        <a href={`/jobs/${job.id}`} class="btn btn-ghost btn-sm mt-6 gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour au poste
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const formContent = document.getElementById('form-content') as HTMLDivElement;
+  const errorDiv = document.getElementById('msg-error') as HTMLDivElement;
+  const errorText = document.getElementById('msg-error-text') as HTMLSpanElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+  function showError(msg: string) {
+    errorText.textContent = msg;
+    errorDiv.classList.remove('hidden');
+  }
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+    loadingDiv.classList.add('hidden');
+    formContent.classList.remove('hidden');
+  }
+
+  document.getElementById('apply-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    errorDiv.classList.add('hidden');
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = '/login';
+      return;
+    }
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const knockoutAnswers = {
+      availability: formData.get('availability'),
+      internet: formData.get('internet'),
+      french_level: formData.get('french_level'),
+      call_experience: formData.get('call_experience'),
+    };
+
+    const jobId = (document.getElementById('job-id') as HTMLInputElement).value;
+
+    const { error } = await supabase
+      .from('applications')
+      .insert({
+        user_id: session.user.id,
+        job_id: jobId,
+        knockout_answers: knockoutAnswers,
+        status: 'pending',
+      });
+
+    if (error) {
+      if (error.code === '23505') {
+        showError('Vous avez déjà postulé à ce poste.');
+      } else {
+        showError(error.message);
+      }
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+    } else {
+      window.location.href = '/dashboard';
+    }
+  });
+
+  init();
+</script>
