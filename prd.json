@@ -424,7 +424,7 @@
       "id": "S4-008",
       "title": "Create roleplay candidate interface",
       "priority": 31,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "/test/roleplay/[applicationId] page",
         "Consent modal for voice recording before starting",
