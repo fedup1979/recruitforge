@@ -28,6 +28,8 @@
 - Global CSS import: each page/layout must `import '../styles/global.css'` in frontmatter
 - DaisyUI theme activation: add `data-theme="ambitia"` to `<html>` element
 - Astro project uses static output mode by default (good for GitHub Pages)
+- BaseLayout.astro: use `<BaseLayout title="..." description="...">` to wrap all pages; includes navbar, footer, SEO
+- Import in pages: `import BaseLayout from '../layouts/BaseLayout.astro';`
 
 ---
 # Iteration Logs (append below)
@@ -46,4 +48,20 @@
   - DaisyUI 5 uses `@plugin "daisyui/theme"` in CSS for theme definition
   - oklch color space required for DaisyUI 5 theme colors
   - Build warning about `@property` in DaisyUI CSS is benign
+---
+
+## 2026-02-09 - S1-002
+- Created BaseLayout.astro with responsive navbar, mobile hamburger, footer, SEO meta tags
+- Navbar: AMBITIA logo/link, nav links (Accueil, Postes, À propos), Connexion button
+- Footer: links to À propos, Postes, Confidentialité, CGU + copyright
+- SEO: og:title, og:description, og:type, og:locale, twitter:card meta tags
+- Title and description are configurable via Props
+- Updated index.astro to use BaseLayout
+- Files changed: src/layouts/BaseLayout.astro (new), src/pages/index.astro (updated)
+- **Learnings for future iterations:**
+  - BaseLayout accepts `title` and `description` props for per-page SEO
+  - DaisyUI `navbar` component handles responsive layout well with `navbar-start/center/end`
+  - Use `dropdown` component for mobile hamburger menu (works without JS)
+  - `flex flex-col` on body + `flex-1` on main ensures footer stays at bottom
+  - Import path from pages: `../layouts/BaseLayout.astro`
 ---

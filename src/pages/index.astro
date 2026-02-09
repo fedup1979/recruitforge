@@ -1,27 +1,15 @@
 ---
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<html lang="fr" data-theme="ambitia">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="generator" content={Astro.generator} />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-		<title>AMBITIA — Recrutement international</title>
-	</head>
-	<body class="min-h-screen bg-base-100 font-sans">
-		<div class="hero min-h-screen">
-			<div class="hero-content text-center">
-				<div class="max-w-md">
-					<h1 class="text-5xl font-bold text-primary">AMBITIA</h1>
-					<p class="py-6 text-base-content">Plateforme de recrutement international AI-powered</p>
-					<button class="btn btn-primary">Voir les postes</button>
-				</div>
-			</div>
-		</div>
-	</body>
-</html>
+<BaseLayout>
+  <div class="hero min-h-[calc(100vh-8rem)]">
+    <div class="hero-content text-center">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold text-primary">AMBITIA</h1>
+        <p class="py-6 text-base-content">Plateforme de recrutement international AI-powered</p>
+        <a href="/jobs" class="btn btn-primary">Voir les postes</a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

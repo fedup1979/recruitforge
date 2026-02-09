@@ -21,7 +21,7 @@
       "id": "S1-002",
       "title": "Create base layout component",
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "acceptanceCriteria": [
         "BaseLayout.astro component created",
         "Responsive navbar with AMBITIA logo placeholder",

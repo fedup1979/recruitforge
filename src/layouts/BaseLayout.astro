@@ -1,0 +1,83 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'AMBITIA — Recrutement international',
+  description = 'Plateforme de recrutement international AI-powered. Trouvez le poste qui vous correspond.',
+} = Astro.props;
+---
+
+<html lang="fr" data-theme="ambitia">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-base-100 font-sans flex flex-col">
+    <!-- Navbar -->
+    <div class="navbar bg-neutral text-neutral-content sticky top-0 z-50">
+      <div class="navbar-start">
+        <!-- Mobile hamburger menu -->
+        <div class="dropdown">
+          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+            </svg>
+          </div>
+          <ul tabindex="0" class="menu menu-sm dropdown-content bg-neutral rounded-box z-10 mt-3 w-52 p-2 shadow">
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/jobs">Postes</a></li>
+            <li><a href="/about">À propos</a></li>
+          </ul>
+        </div>
+        <a href="/" class="btn btn-ghost text-xl font-bold">AMBITIA</a>
+      </div>
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+          <li><a href="/">Accueil</a></li>
+          <li><a href="/jobs">Postes</a></li>
+          <li><a href="/about">À propos</a></li>
+        </ul>
+      </div>
+      <div class="navbar-end">
+        <a href="/login" class="btn btn-primary btn-sm">Connexion</a>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center bg-neutral text-neutral-content p-10">
+      <nav class="grid grid-flow-col gap-4">
+        <a href="/about" class="link link-hover">À propos</a>
+        <a href="/jobs" class="link link-hover">Postes</a>
+        <a href="/privacy" class="link link-hover">Confidentialité</a>
+        <a href="/terms" class="link link-hover">CGU</a>
+      </nav>
+      <aside>
+        <p>&copy; {new Date().getFullYear()} AMBITIA. Tous droits réservés.</p>
+      </aside>
+    </footer>
+  </body>
+</html>
