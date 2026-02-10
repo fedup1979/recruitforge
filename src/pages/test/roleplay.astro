@@ -308,15 +308,41 @@ IMPORTANT : Tu parles UNIQUEMENT en français. Garde tes réponses courtes (1-3 
         });
 
         vapiInstance.on('error', (error: any) => {
-          console.error('Vapi error (full):', JSON.stringify(error, null, 2));
           if (timerInterval) clearInterval(timerInterval);
 
-          // Extract real error message from various Vapi error formats
-          const msg = error?.error?.message
-            || error?.errorMessage
-            || error?.message
-            || (typeof error === 'string' ? error : '')
-            || JSON.stringify(error);
+          // Deep-extract the error message from any Vapi format
+          let msg = 'Erreur inconnue';
+          try {
+            if (typeof error === 'string') {
+              msg = error;
+            } else if (error) {
+              // Try all known paths
+              msg = error?.error?.message
+                || error?.error?.msg
+                || error?.errorMessage
+                || error?.message
+                || error?.msg
+                || error?.statusText
+                || '';
+              // If still empty, dump all keys and values
+              if (!msg) {
+                const keys = Object.keys(error);
+                const parts: string[] = [];
+                for (const k of keys) {
+                  const v = error[k];
+                  if (typeof v === 'string') parts.push(`${k}: ${v}`);
+                  else if (typeof v === 'object' && v !== null) {
+                    try { parts.push(`${k}: ${JSON.stringify(v)}`); } catch { parts.push(`${k}: [object]`); }
+                  } else {
+                    parts.push(`${k}: ${String(v)}`);
+                  }
+                }
+                msg = parts.join(' | ') || 'Erreur Vapi (aucun détail)';
+              }
+            }
+          } catch {
+            msg = 'Erreur Vapi non sérialisable';
+          }
 
           showError(msg);
         });
