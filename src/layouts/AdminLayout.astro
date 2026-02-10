@@ -27,10 +27,10 @@ const { title = 'Admin — AMBITIA' } = Astro.props;
 
     <div id="admin-app" class="hidden">
       <!-- Mobile top bar -->
-      <div class="navbar bg-neutral text-neutral-content lg:hidden">
+      <nav class="navbar bg-neutral text-neutral-content lg:hidden" aria-label="Navigation admin mobile">
         <div class="navbar-start">
           <label for="admin-drawer" class="btn btn-ghost btn-sm" aria-label="Menu">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
             </svg>
           </label>
@@ -41,20 +41,21 @@ const { title = 'Admin — AMBITIA' } = Astro.props;
         <div class="navbar-end">
           <button id="admin-logout-mobile" class="btn btn-ghost btn-sm">Déco.</button>
         </div>
-      </div>
+      </nav>
 
       <div class="drawer lg:drawer-open">
         <input id="admin-drawer" type="checkbox" class="drawer-toggle" />
-        <div class="drawer-content p-4 lg:p-8">
+        <main class="drawer-content p-4 lg:p-8" id="main-content">
           <slot />
-        </div>
+        </main>
         <div class="drawer-side z-40">
           <label for="admin-drawer" aria-label="Fermer" class="drawer-overlay"></label>
-          <aside class="bg-neutral text-neutral-content w-64 min-h-full p-4">
+          <aside class="bg-neutral text-neutral-content w-64 min-h-full p-4" aria-label="Navigation admin">
             <div class="mb-8">
               <a href="/admin" class="text-xl font-bold">AMBITIA</a>
               <p class="text-xs opacity-60 mt-1">Administration</p>
             </div>
+            <nav aria-label="Menu admin">
             <ul class="menu">
               <li><a href="/admin">Dashboard</a></li>
               <li><a href="/admin/candidates">Candidats</a></li>
@@ -62,6 +63,7 @@ const { title = 'Admin — AMBITIA' } = Astro.props;
               <li><a href="/admin/pool">Vivier</a></li>
               <li><a href="/admin/stats">Statistiques</a></li>
             </ul>
+            </nav>
             <div class="mt-auto pt-8">
               <a href="/" class="btn btn-ghost btn-sm w-full justify-start opacity-60">Retour au site</a>
               <button id="admin-logout" class="btn btn-ghost btn-sm w-full justify-start opacity-60 mt-1">Déconnexion</button>
