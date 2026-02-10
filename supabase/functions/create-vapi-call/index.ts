@@ -4,6 +4,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '../_shared/rate-limit.ts';
 
 const VAPI_API_KEY = Deno.env.get('VAPI_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -58,6 +59,13 @@ IMPORTANT : Tu parles UNIQUEMENT en français. Garde tes réponses courtes (1-3 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Rate limit: 5 calls per minute per IP (Vapi calls are expensive)
+  const ip = getClientIp(req);
+  const limit = checkRateLimit(`vapi-call:${ip}`, 5, 60_000);
+  if (!limit.allowed) {
+    return rateLimitResponse(limit.retryAfterMs, corsHeaders);
   }
 
   try {

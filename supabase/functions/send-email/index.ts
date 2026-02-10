@@ -4,6 +4,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '../_shared/rate-limit.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -192,6 +193,13 @@ function getEmailContent(template: EmailTemplate, data: Record<string, string> =
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Rate limit: 20 emails per minute per IP
+  const ip = getClientIp(req);
+  const limit = checkRateLimit(`send-email:${ip}`, 20, 60_000);
+  if (!limit.allowed) {
+    return rateLimitResponse(limit.retryAfterMs, corsHeaders);
   }
 
   try {
