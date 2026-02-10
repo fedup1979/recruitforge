@@ -406,14 +406,14 @@ CREATE TRIGGER on_application_status_change
 -- SEED: Initial job data (2 countries)
 -- ============================================================
 INSERT INTO jobs (title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config) VALUES (
-  'Setter - Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec Yasmine (conseillère formation) pour la Formation Secrétaire Médicale de l''École de Santé de Suisse Romande (ESSR).
+  'Setter - Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseiller(ère) formation pour une formation professionnelle certifiée.
 
 Vos missions :
 - Contacter les prospects ayant demandé des informations via Facebook/Instagram
 - Qualifier les leads (motivation, disponibilité, budget)
 - Gérer les objections avec empathie et professionnalisme
-- Booker des rendez-vous de 15 minutes avec Yasmine, notre conseillère formation
+- Booker des rendez-vous de 15 minutes avec notre conseiller(ère) formation
 - Atteindre un objectif de 8-12 RDV bookés par jour
 
 Volume : ~50 leads/jour, 80-120 appels/jour, 25-40 conversations/jour
@@ -443,14 +443,14 @@ KPIs :
 ) ON CONFLICT DO NOTHING;
 
 INSERT INTO jobs (title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config) VALUES (
-  'Setter - Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec Yasmine (conseillère formation) pour la Formation Secrétaire Médicale de l''École de Santé de Suisse Romande (ESSR).
+  'Setter - Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseiller(ère) formation pour une formation professionnelle certifiée.
 
 Vos missions :
 - Contacter les prospects ayant demandé des informations via Facebook/Instagram
 - Qualifier les leads (motivation, disponibilité, budget)
 - Gérer les objections avec empathie et professionnalisme
-- Booker des rendez-vous de 15 minutes avec Yasmine, notre conseillère formation
+- Booker des rendez-vous de 15 minutes avec notre conseiller(ère) formation
 - Atteindre un objectif de 8-12 RDV bookés par jour
 
 Volume : ~50 leads/jour, 80-120 appels/jour, 25-40 conversations/jour
@@ -480,14 +480,14 @@ KPIs :
 ) ON CONFLICT DO NOTHING;
 
 -- ============================================================
--- ADMIN SETUP: Create profile for François Dupuis
+-- ADMIN SETUP: Create admin profile
 -- (User was created before profiles table existed, so trigger didn't fire)
 -- ============================================================
 INSERT INTO profiles (id, email, full_name, role)
 VALUES (
   '58f657fc-3c1f-487f-b528-c5da06d03e29',
   'francois.dupuis@essr.ch',
-  'François Dupuis',
+  'Admin',
   'admin'
 )
 ON CONFLICT (id) DO UPDATE SET role = 'admin';

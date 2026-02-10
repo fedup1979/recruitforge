@@ -320,14 +320,14 @@ $$;
 
 INSERT INTO jobs (title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status) VALUES
 (
-  'Setter — Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseillère formation pour la Formation Secrétaire Médicale ESSR. Volume : 50 leads/jour, objectif 8-12 RDV/jour.',
+  'Setter — Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseillère formation pour une formation professionnelle certifiée. Volume : 50 leads/jour, objectif 8-12 RDV/jour.',
   ARRAY['Français fluide avec accent compréhensible', 'Voix agréable et ton chaleureux', 'Écoute active et capacité de reformulation', 'Résilience face au rejet', 'PC/Mac avec casque micro et connexion internet stable (min 10 Mbps)', 'Disponible lundi-vendredi, 9h-18h CET'],
   'MG', 2500000, 'MGA', '2.5M Ariary/mois', 'Freelance', 'Télétravail', 'open'
 ),
 (
-  'Setter — Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseillère formation pour la Formation Secrétaire Médicale ESSR. Volume : 50 leads/jour, objectif 8-12 RDV/jour.',
+  'Setter — Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseillère formation pour une formation professionnelle certifiée. Volume : 50 leads/jour, objectif 8-12 RDV/jour.',
   ARRAY['Français fluide avec accent compréhensible', 'Voix agréable et ton chaleureux', 'Écoute active et capacité de reformulation', 'Résilience face au rejet', 'PC/Mac avec casque micro et connexion internet stable (min 10 Mbps)', 'Disponible lundi-vendredi, 9h-18h CET'],
   'MA', 6000, 'MAD', '6 000 DH/mois', 'Freelance', 'Télétravail', 'open'
 ),

@@ -125,72 +125,93 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <div class="card bg-base-200 mb-6" id="scoring-section">
       <div class="card-body">
         <h2 class="card-title text-base">Grille d'évaluation Roleplay</h2>
-        <p class="text-xs text-base-content/50 mb-3">Score chaque critère de 1 (faible) à 5 (excellent). Minimum pour avancer : 18/30.</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs text-base-content/50">Score chaque critère de 1 (faible) à 5 (excellent). Minimum pour avancer : 18/30.</p>
+          <button id="reset-all-scores" class="btn btn-ghost btn-xs text-error">Tout réinitialiser</button>
+        </div>
         <div class="space-y-3" id="scoring-grid">
           <div class="flex items-center justify-between gap-4" data-criterion="ouverture">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Ouverture</span><p class="text-xs text-base-content/40">Naturelle, chaleureuse</p></div>
-            <div class="rating rating-md" id="rating-ouverture">
-              <input type="radio" name="ouverture" class="rating-hidden" value="0" checked />
-              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-ouverture">
+                <input type="radio" name="ouverture" class="rating-hidden" value="0" checked />
+                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="ouverture" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
           <div class="flex items-center justify-between gap-4" data-criterion="qualification">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Qualification</span><p class="text-xs text-base-content/40">Questions pertinentes, écoute</p></div>
-            <div class="rating rating-md" id="rating-qualification">
-              <input type="radio" name="qualification" class="rating-hidden" value="0" checked />
-              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-qualification">
+                <input type="radio" name="qualification" class="rating-hidden" value="0" checked />
+                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="qualification" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
           <div class="flex items-center justify-between gap-4" data-criterion="objections">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Gestion objections</span><p class="text-xs text-base-content/40">Répond avec assurance, rebondit</p></div>
-            <div class="rating rating-md" id="rating-objections">
-              <input type="radio" name="objections" class="rating-hidden" value="0" checked />
-              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-objections">
+                <input type="radio" name="objections" class="rating-hidden" value="0" checked />
+                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="objections" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
           <div class="flex items-center justify-between gap-4" data-criterion="closing">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Closing</span><p class="text-xs text-base-content/40">Demande claire, assume</p></div>
-            <div class="rating rating-md" id="rating-closing">
-              <input type="radio" name="closing" class="rating-hidden" value="0" checked />
-              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-closing">
+                <input type="radio" name="closing" class="rating-hidden" value="0" checked />
+                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="closing" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
           <div class="flex items-center justify-between gap-4" data-criterion="ton">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Ton général</span><p class="text-xs text-base-content/40">Chaleureux, souriant</p></div>
-            <div class="rating rating-md" id="rating-ton">
-              <input type="radio" name="ton" class="rating-hidden" value="0" checked />
-              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-ton">
+                <input type="radio" name="ton" class="rating-hidden" value="0" checked />
+                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="ton" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
           <div class="flex items-center justify-between gap-4" data-criterion="ecoute">
             <div class="min-w-[140px]"><span class="font-medium text-sm">Écoute</span><p class="text-xs text-base-content/40">Reformule, adapte</p></div>
-            <div class="rating rating-md" id="rating-ecoute">
-              <input type="radio" name="ecoute" class="rating-hidden" value="0" checked />
-              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="1" />
-              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="2" />
-              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="3" />
-              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="4" />
-              <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="5" />
+            <div class="flex items-center gap-2">
+              <div class="rating rating-md" id="rating-ecoute">
+                <input type="radio" name="ecoute" class="rating-hidden" value="0" checked />
+                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="1" />
+                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="2" />
+                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="3" />
+                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="4" />
+                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="5" />
+              </div>
+              <button class="btn btn-ghost btn-xs reset-rating" data-name="ecoute" title="Remettre à 0">&#x2715;</button>
             </div>
           </div>
         </div>
@@ -336,7 +357,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       } else {
         testDiv.innerHTML = testResults.map((t: any) => {
           const typeLabels: Record<string, string> = {
-            big_five: 'Big Five (TIPI-10)', quiz: 'Quiz ESSR', human_score: 'Score humain',
+            big_five: 'Big Five (TIPI-10)', quiz: 'Quiz produit', human_score: 'Score humain',
             composite: 'Score composite', roleplay: 'Roleplay', roleplay_easy: 'Roleplay (facile)', roleplay_medium: 'Roleplay (moyen)',
           };
           const typeLabel = typeLabels[t.test_type] || t.test_type;
@@ -566,6 +587,26 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     // Listen for rating changes
     document.querySelectorAll('#scoring-grid input[type="radio"]').forEach(input => {
       input.addEventListener('change', updateScoreTotal);
+    });
+
+    // Reset individual rating
+    document.querySelectorAll('.reset-rating').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = (btn as HTMLButtonElement).dataset.name!;
+        const hidden = document.querySelector(`input[name="${name}"].rating-hidden`) as HTMLInputElement;
+        if (hidden) { hidden.checked = true; }
+        updateScoreTotal();
+      });
+    });
+
+    // Reset all ratings
+    document.getElementById('reset-all-scores')?.addEventListener('click', () => {
+      const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
+      criteria.forEach(c => {
+        const hidden = document.querySelector(`input[name="${c}"].rating-hidden`) as HTMLInputElement;
+        if (hidden) hidden.checked = true;
+      });
+      updateScoreTotal();
     });
 
     // Save score

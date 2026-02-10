@@ -1,17 +1,17 @@
--- Seed: Setter ESSR jobs (one per country)
+-- Seed: Setter jobs (one per country)
 -- Story: S6-005
 -- Run this after migrations to populate initial job data
 
--- Setter ESSR - Madagascar
+-- Setter - Madagascar
 INSERT INTO jobs (title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config) VALUES (
-  'Setter - Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec Yasmine (conseillère formation) pour la Formation Secrétaire Médicale de l''École de Santé de Suisse Romande (ESSR).
+  'Setter - Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseiller(ère) formation pour une formation professionnelle certifiée.
 
 Vos missions :
 - Contacter les prospects ayant demandé des informations via Facebook/Instagram
 - Qualifier les leads (motivation, disponibilité, budget)
 - Gérer les objections avec empathie et professionnalisme
-- Booker des rendez-vous de 15 minutes avec Yasmine, notre conseillère formation
+- Booker des rendez-vous de 15 minutes avec notre conseiller(ère) formation
 - Atteindre un objectif de 8-12 RDV bookés par jour
 
 Volume : ~50 leads/jour, 80-120 appels/jour, 25-40 conversations/jour
@@ -40,16 +40,16 @@ KPIs :
   '{"tests": ["bigfive", "quiz", "roleplay_easy", "roleplay_medium"], "min_quiz_score": 60, "min_roleplay_score": 18}'::jsonb
 ) ON CONFLICT DO NOTHING;
 
--- Setter ESSR - Morocco
+-- Setter - Morocco
 INSERT INTO jobs (title, description, requirements, country, salary_amount, salary_currency, salary_label, contract_type, location, status, test_config) VALUES (
-  'Setter - Formation Secrétaire Médicale',
-  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec Yasmine (conseillère formation) pour la Formation Secrétaire Médicale de l''École de Santé de Suisse Romande (ESSR).
+  'Setter - Formation professionnelle',
+  'Appeler les leads Meta Ads et booker des rendez-vous téléphoniques avec notre conseiller(ère) formation pour une formation professionnelle certifiée.
 
 Vos missions :
 - Contacter les prospects ayant demandé des informations via Facebook/Instagram
 - Qualifier les leads (motivation, disponibilité, budget)
 - Gérer les objections avec empathie et professionnalisme
-- Booker des rendez-vous de 15 minutes avec Yasmine, notre conseillère formation
+- Booker des rendez-vous de 15 minutes avec notre conseiller(ère) formation
 - Atteindre un objectif de 8-12 RDV bookés par jour
 
 Volume : ~50 leads/jour, 80-120 appels/jour, 25-40 conversations/jour

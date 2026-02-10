@@ -286,8 +286,8 @@
       "passes": true,
       "acceptanceCriteria": [
         "/test/quiz/[applicationId] page",
-        "Video embed placeholder (ESSR presentation)",
-        "Quiz questions about ESSR/FSM",
+        "Video embed placeholder (product presentation)",
+        "Quiz questions about product knowledge",
         "Multiple choice format",
         "Score calculation",
         "Save results to test_results"
@@ -414,7 +414,7 @@
         "Vapi SDK configured",
         "Edge function to create Vapi call session",
         "Environment variable for VAPI_API_KEY",
-        "Vapi assistant configured with roleplay persona (prospect ESSR)",
+        "Vapi assistant configured with roleplay persona (prospect)",
         "2 scenario prompts: easy (motivated prospect) and medium (hesitant prospect)",
         "Call recording enabled",
         "Transcript generation enabled"
@@ -614,12 +614,12 @@
     },
     {
       "id": "S6-005",
-      "title": "Seed Setter ESSR jobs (one per country)",
+      "title": "Seed Setter jobs (one per country)",
       "priority": 45,
       "passes": true,
       "acceptanceCriteria": [
-        "Job record created for Madagascar: Setter - Formation Secrétaire Médicale, country='MG', salary_amount=2500000, salary_currency='MGA', salary_label='2.5M Ariary/mois'",
-        "Job record created for Morocco: Setter - Formation Secrétaire Médicale, country='MA', salary_amount=6000, salary_currency='MAD', salary_label='6 000 DH/mois'",
+        "Job record created for Madagascar: Setter - Formation professionnelle, country='MG', salary_amount=2500000, salary_currency='MGA', salary_label='2.5M Ariary/mois'",
+        "Job record created for Morocco: Setter - Formation professionnelle, country='MA', salary_amount=6000, salary_currency='MAD', salary_label='6 000 DH/mois'",
         "Both jobs share same title, description from SCORECARD, requirements",
         "test_config set for Big Five + Quiz + Roleplay on both",
         "Status: open on both"

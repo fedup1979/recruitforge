@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Quiz Formation ESSR — AMBITIA" description="Testez vos connaissances sur la Formation Secrétaire Médicale ESSR.">
+<BaseLayout title="Quiz produit — AMBITIA" description="Testez vos connaissances sur le produit ou service que vous allez promouvoir.">
   <section class="py-12 px-4">
     <div class="max-w-2xl mx-auto">
       <!-- Loading -->
@@ -14,13 +14,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <div id="quiz-content" class="hidden">
         <!-- Video placeholder -->
         <div class="mb-8">
-          <h1 class="text-2xl font-bold text-base-content mb-4">Formation produit ESSR</h1>
+          <h1 class="text-2xl font-bold text-base-content mb-4">Quiz de connaissances produit</h1>
           <div class="aspect-video rounded-xl bg-base-200 flex flex-col items-center justify-center text-center p-6 border border-base-300/30 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p class="text-sm text-base-content/50">Vidéo de présentation ESSR — bientôt disponible</p>
+            <p class="text-sm text-base-content/50">Vidéo de présentation — bientôt disponible</p>
           </div>
           <p class="text-base-content/60 text-sm">Lisez attentivement les informations ci-dessous avant de répondre au quiz.</p>
         </div>
@@ -29,13 +29,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <div class="bg-base-200 rounded-xl p-5 mb-8 space-y-3">
           <h3 class="font-semibold text-base-content">Points clés à retenir :</h3>
           <ul class="space-y-2 text-sm text-base-content/80">
-            <li>&#x2022; <strong>ESSR</strong> = École de Santé de Suisse Romande, fondée en 2010</li>
-            <li>&#x2022; <strong>FSM</strong> = Formation Secrétaire Médicale (formation phare)</li>
-            <li>&#x2022; Durée FSM : <strong>3 mois</strong>, prix : <strong>3 450 CHF</strong> (distance)</li>
-            <li>&#x2022; Paiement possible en <strong>10 fois</strong></li>
-            <li>&#x2022; Certifications : EduQua, ASCA, RME, OrTra et plus</li>
-            <li>&#x2022; Fondateurs : François Dupuis (médecin) et Laura Escariz (sociologue)</li>
-            <li>&#x2022; 1 200+ avis Google (4.9/5 étoiles)</li>
+            <li>&#x2022; Vous allez promouvoir une <strong>formation professionnelle en ligne</strong></li>
+            <li>&#x2022; La formation dure <strong>3 mois</strong> et se fait à distance</li>
+            <li>&#x2022; Le paiement est possible en <strong>plusieurs fois</strong></li>
+            <li>&#x2022; L'organisme de formation est <strong>certifié et reconnu</strong></li>
+            <li>&#x2022; Plus de 1 000 avis positifs en ligne (4.9/5 étoiles)</li>
             <li>&#x2022; Taux de réussite : <strong>95%</strong></li>
           </ul>
         </div>
@@ -76,44 +74,44 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   const quizQuestions = [
     {
-      question: 'Que signifie ESSR ?',
-      options: ['École de Santé de Suisse Romande', 'École Supérieure de Secrétariat et Réception', 'Établissement Suisse de Soins et Rééducation', 'École de Services de Santé Régionale'],
-      correct: 0,
-    },
-    {
-      question: 'Que signifie FSM ?',
-      options: ['Formation Santé et Management', 'Formation Secrétaire Médicale', 'Formation Spécialisée en Médecine', 'Formation Suisse de Médiation'],
+      question: 'Quel est le principal objectif d\'un setter ?',
+      options: ['Vendre directement le produit', 'Booker un rendez-vous avec un conseiller', 'Envoyer des emails promotionnels', 'Créer du contenu marketing'],
       correct: 1,
     },
     {
-      question: 'Quelle est la durée de la formation FSM ?',
+      question: 'Combien de leads un setter traite-t-il en moyenne par jour ?',
+      options: ['10-20', '30-50', '50-80', '100-200'],
+      correct: 1,
+    },
+    {
+      question: 'Quelle est la durée typique de la formation proposée ?',
       options: ['1 mois', '3 mois', '6 mois', '12 mois'],
       correct: 1,
     },
     {
-      question: 'Quel est le prix de la FSM à distance ?',
-      options: ['2 450 CHF', '3 450 CHF', '4 450 CHF', '5 450 CHF'],
+      question: 'Quel est le KPI principal d\'un setter ?',
+      options: ['Nombre d\'emails envoyés', 'Taux de rendez-vous bookés', 'Nombre de ventes conclues', 'Durée moyenne d\'appel'],
       correct: 1,
     },
     {
-      question: 'Quel est le taux de réussite à la FSM ?',
+      question: 'Quel est le taux de réussite annoncé de la formation ?',
       options: ['75%', '85%', '95%', '100%'],
       correct: 2,
     },
     {
-      question: 'Qui a fondé l\'ESSR ?',
-      options: ['Un groupe d\'investisseurs', 'François Dupuis et Laura Escariz', 'Le canton de Genève', 'Une association médicale'],
+      question: 'Quelle est la meilleure réaction face à l\'objection « Je dois réfléchir » ?',
+      options: ['Raccrocher et rappeler plus tard', 'Demander ce qui fait hésiter, puis rassurer', 'Insister lourdement sur l\'urgence', 'Proposer une réduction de prix'],
       correct: 1,
     },
     {
-      question: 'En combien de fois peut-on payer la formation ?',
-      options: ['3 fois', '5 fois', '10 fois', 'Paiement unique seulement'],
-      correct: 2,
+      question: 'Quelles modalités de paiement proposer à un prospect ?',
+      options: ['Paiement unique obligatoire', 'Paiement en plusieurs fois', 'Gratuit, financé par l\'État', 'Paiement à crédit bancaire'],
+      correct: 1,
     },
     {
-      question: 'Quelle note moyenne l\'ESSR a-t-elle sur Google ?',
-      options: ['3.5/5', '4.2/5', '4.9/5', '5/5'],
-      correct: 2,
+      question: 'Que signifie un bon taux de contact ?',
+      options: ['Plus de 20% des appels aboutissent', 'Plus de 50% des appels aboutissent', 'Plus de 80% des appels aboutissent', '100% des appels aboutissent'],
+      correct: 1,
     },
   ];
 
