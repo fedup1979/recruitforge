@@ -1,0 +1,311 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Test de raisonnement logique — AMBITIA" description="Complétez le test de matrices pour évaluer votre raisonnement logique.">
+  <!-- Consent Modal -->
+  <dialog id="consent-modal" class="modal modal-open">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Consentement — Test de raisonnement</h3>
+      <p class="py-4 text-sm text-base-content/80">
+        Ce test évalue votre capacité de raisonnement logique à travers des matrices visuelles.
+        Il comprend 25 questions et prend environ 15 minutes. Vos résultats sont confidentiels
+        et ne seront pas partagés avec des tiers. En continuant, vous acceptez ce traitement.
+      </p>
+      <div class="form-control">
+        <label class="label cursor-pointer justify-start gap-3">
+          <input type="checkbox" id="consent-checkbox" class="checkbox checkbox-primary" />
+          <span class="label-text">J'accepte le test de raisonnement logique</span>
+        </label>
+      </div>
+      <div class="modal-action">
+        <a href="/dashboard" class="btn btn-ghost">Annuler</a>
+        <button id="consent-accept" class="btn btn-primary" disabled>Commencer le test</button>
+      </div>
+    </div>
+  </dialog>
+
+  <section class="py-12 px-4">
+    <div class="max-w-2xl mx-auto">
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Test content -->
+      <div id="test-content" class="hidden">
+        <h1 class="text-2xl font-bold text-base-content mb-2">Test de raisonnement logique</h1>
+        <p class="text-base-content/60 mb-6">
+          Observez la matrice ci-dessous. Une case est manquante. Choisissez parmi les 8 options
+          celle qui complète logiquement la grille.
+        </p>
+
+        <!-- Progress -->
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-base-content/50">Question <span id="current-q">1</span>/25</span>
+          <span class="text-sm font-medium text-primary" id="progress-pct">0%</span>
+        </div>
+        <progress id="test-progress" class="progress progress-primary w-full mb-6" value="0" max="100"></progress>
+
+        <!-- Question container -->
+        <div id="question-container">
+          <!-- Stimulus image -->
+          <div class="mb-4">
+            <p class="text-sm text-base-content/50 mb-2">Matrice :</p>
+            <div class="bg-base-200 rounded-box p-2 flex justify-center">
+              <img id="stimulus-img" src="" alt="Matrice à compléter" class="max-w-full max-h-[300px] object-contain" />
+            </div>
+          </div>
+
+          <!-- Answer options image -->
+          <div class="mb-4">
+            <p class="text-sm text-base-content/50 mb-2">Options de réponse :</p>
+            <div class="bg-base-200 rounded-box p-2 flex justify-center">
+              <img id="answers-img" src="" alt="8 options de réponse" class="max-w-full max-h-[200px] object-contain" />
+            </div>
+          </div>
+
+          <!-- Answer selection -->
+          <div class="mb-4">
+            <p class="text-sm text-base-content/50 mb-3">Votre réponse :</p>
+            <div class="grid grid-cols-4 gap-2" id="answer-grid">
+              <button class="btn btn-outline answer-btn" data-value="1">1</button>
+              <button class="btn btn-outline answer-btn" data-value="2">2</button>
+              <button class="btn btn-outline answer-btn" data-value="3">3</button>
+              <button class="btn btn-outline answer-btn" data-value="4">4</button>
+              <button class="btn btn-outline answer-btn" data-value="5">5</button>
+              <button class="btn btn-outline answer-btn" data-value="6">6</button>
+              <button class="btn btn-outline answer-btn" data-value="7">7</button>
+              <button class="btn btn-outline answer-btn" data-value="8">8</button>
+            </div>
+          </div>
+
+          <button id="next-btn" class="btn btn-primary w-full mt-4" disabled>Suivant</button>
+        </div>
+
+        <!-- Submitting -->
+        <div id="submitting" class="text-center py-8 hidden">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-base-content/60 mt-4">Calcul de vos résultats...</p>
+        </div>
+
+        <!-- Completed state -->
+        <div id="completed" class="hidden">
+          <div class="text-center py-6">
+            <div class="text-5xl mb-4" id="result-emoji">&#10003;</div>
+            <h2 class="text-2xl font-bold text-base-content mb-2">Test terminé !</h2>
+            <p class="text-base-content/60 mb-2">Voici vos résultats.</p>
+          </div>
+
+          <!-- Results -->
+          <div class="card bg-base-200 mb-4">
+            <div class="card-body">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-lg font-bold">Score global</span>
+                <span class="text-2xl font-bold text-primary" id="result-score">—</span>
+              </div>
+              <div class="space-y-2" id="results-breakdown">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <a href="/dashboard" class="btn btn-primary w-full">Retour au tableau de bord</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  import { matrixItems, TOTAL_ITEMS, scoreIntelligence } from '../../lib/intelligence';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  // DOM refs
+  const consentModal = document.getElementById('consent-modal') as HTMLDialogElement;
+  const consentCheckbox = document.getElementById('consent-checkbox') as HTMLInputElement;
+  const consentAccept = document.getElementById('consent-accept') as HTMLButtonElement;
+  const loadingDiv = document.getElementById('loading') as HTMLDivElement;
+  const testContent = document.getElementById('test-content') as HTMLDivElement;
+  const stimulusImg = document.getElementById('stimulus-img') as HTMLImageElement;
+  const answersImg = document.getElementById('answers-img') as HTMLImageElement;
+  const currentQSpan = document.getElementById('current-q') as HTMLSpanElement;
+  const progressPct = document.getElementById('progress-pct') as HTMLSpanElement;
+  const testProgress = document.getElementById('test-progress') as HTMLProgressElement;
+  const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+  const questionContainer = document.getElementById('question-container') as HTMLDivElement;
+  const submittingDiv = document.getElementById('submitting') as HTMLDivElement;
+  const completedDiv = document.getElementById('completed') as HTMLDivElement;
+  const answerBtns = document.querySelectorAll<HTMLButtonElement>('.answer-btn');
+
+  let currentQuestion = 0;
+  const answers: Record<number, number> = {};
+  let applicationId: string | null = null;
+
+  const params = new URLSearchParams(window.location.search);
+  applicationId = params.get('app');
+
+  // ── Consent ─────────────────────────────────────────────────
+  consentCheckbox?.addEventListener('change', () => {
+    consentAccept.disabled = !consentCheckbox.checked;
+  });
+
+  consentAccept?.addEventListener('click', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    await supabase.from('consents').insert({
+      user_id: session.user.id,
+      consent_type: 'intelligence_test',
+      granted: true,
+      granted_at: new Date().toISOString(),
+    });
+
+    consentModal.classList.remove('modal-open');
+    consentModal.close();
+    showQuestion();
+  });
+
+  // ── Question display ────────────────────────────────────────
+  function showQuestion() {
+    if (currentQuestion >= matrixItems.length) {
+      submitTest();
+      return;
+    }
+
+    const item = matrixItems[currentQuestion];
+    stimulusImg.src = `/matrices/${item.stimulus}.png`;
+    answersImg.src = `/matrices/${item.stimulus}_Answers.png`;
+    currentQSpan.textContent = String(currentQuestion + 1);
+
+    const pct = Math.round((currentQuestion / TOTAL_ITEMS) * 100);
+    progressPct.textContent = `${pct}%`;
+    testProgress.value = pct;
+
+    // Reset answer selection
+    const saved = answers[item.id];
+    answerBtns.forEach(btn => {
+      const val = parseInt(btn.dataset.value!);
+      if (saved === val) {
+        btn.classList.add('btn-primary');
+        btn.classList.remove('btn-outline');
+      } else {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline');
+      }
+    });
+    nextBtn.disabled = saved === undefined;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Answer selection ────────────────────────────────────────
+  answerBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.value!);
+      const item = matrixItems[currentQuestion];
+      answers[item.id] = val;
+
+      // Highlight selected
+      answerBtns.forEach(b => {
+        if (b === btn) {
+          b.classList.add('btn-primary');
+          b.classList.remove('btn-outline');
+        } else {
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-outline');
+        }
+      });
+      nextBtn.disabled = false;
+    });
+  });
+
+  // ── Navigation ──────────────────────────────────────────────
+  nextBtn.addEventListener('click', () => {
+    currentQuestion++;
+    showQuestion();
+  });
+
+  // ── Submit ──────────────────────────────────────────────────
+  async function submitTest() {
+    questionContainer.classList.add('hidden');
+    submittingDiv.classList.remove('hidden');
+
+    const result = scoreIntelligence(answers);
+
+    if (applicationId) {
+      await supabase.from('test_results').insert({
+        application_id: applicationId,
+        test_type: 'intelligence',
+        answers,
+        score: result.score,
+        result_data: {
+          correct: result.correct,
+          total: result.total,
+          byDifficulty: result.byDifficulty,
+        },
+        completed_at: new Date().toISOString(),
+      });
+    }
+
+    submittingDiv.classList.add('hidden');
+    showResults(result);
+  }
+
+  // ── Results display ─────────────────────────────────────────
+  function showResults(result: ReturnType<typeof scoreIntelligence>) {
+    testProgress.value = 100;
+    progressPct.textContent = '100%';
+
+    const emojiEl = document.getElementById('result-emoji')!;
+    if (result.score >= 75) emojiEl.textContent = '🎯';
+    else if (result.score >= 50) emojiEl.textContent = '👍';
+    else emojiEl.textContent = '💪';
+
+    document.getElementById('result-score')!.textContent = `${result.correct}/${result.total} (${result.score}%)`;
+
+    const diffLabels: Record<string, string> = {
+      easy: 'Facile',
+      medium: 'Intermédiaire',
+      hard: 'Difficile',
+      very_hard: 'Très difficile',
+    };
+    const diffColors: Record<string, string> = {
+      easy: 'badge-success',
+      medium: 'badge-info',
+      hard: 'badge-warning',
+      very_hard: 'badge-error',
+    };
+
+    const breakdownDiv = document.getElementById('results-breakdown')!;
+    breakdownDiv.innerHTML = Object.entries(result.byDifficulty).map(([key, val]) => `
+      <div class="flex items-center justify-between text-sm">
+        <span class="badge ${diffColors[key]} badge-sm">${diffLabels[key]}</span>
+        <span class="font-medium">${val.correct}/${val.total}</span>
+      </div>
+    `).join('');
+
+    completedDiv.classList.remove('hidden');
+  }
+
+  // ── Init ────────────────────────────────────────────────────
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    if (!applicationId) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    loadingDiv.classList.add('hidden');
+    testContent.classList.remove('hidden');
+  }
+
+  init();
+</script>

@@ -49,7 +49,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const noAppDiv = document.getElementById('no-app') as HTMLDivElement;
 
   const requiredTests = [
-    { type: 'big_five', label: 'Test de personnalité (Big Five)', url: '/test/bigfive', duration: '~10 min' },
+    { type: 'big_five', label: 'Test de personnalité (Big Five)', url: '/test/bigfive', duration: '~15 min' },
+    { type: 'intelligence', label: 'Test de raisonnement logique', url: '/test/intelligence', duration: '~15 min' },
     { type: 'quiz', label: 'Quiz connaissances produit', url: '/test/quiz', duration: '~10 min' },
     { type: 'roleplay', label: 'Roleplay vocal (Simulation d\'appel)', url: '/test/roleplay', duration: '~15 min', requiresStatus: 'interview' },
   ];
@@ -95,7 +96,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       return true;
     });
 
-    // Check if base tests (big_five, quiz) are completed
+    // Check if base tests (big_five, intelligence, quiz) are completed
     const baseTests = requiredTests.filter(t => !(t as any).requiresStatus);
     const baseCompleted = baseTests.every(t => completedMap.has(t.type));
 
@@ -104,10 +105,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       // Calculate composite score
       const bigFiveResult = completedMap.get('big_five');
       const quizResult = completedMap.get('quiz');
+      const intelligenceResult = completedMap.get('intelligence');
 
-      if (bigFiveResult && quizResult && !completedMap.has('composite')) {
-        // Big Five: total ranges ~5-35, normalize to 0-100
-        const bigFiveNorm = Math.min(100, Math.round((bigFiveResult.score / 35) * 100));
+      if (bigFiveResult && quizResult && intelligenceResult && !completedMap.has('composite')) {
+        // Big Five: IPIP-NEO-120 scores are already 0-100
+        const bigFiveNorm = Math.min(100, Math.round(bigFiveResult.score));
+        // Intelligence: already 0-100
+        const intelligenceNorm = Math.min(100, Math.round(intelligenceResult.score));
         // Quiz: already 0-100
         const quizNorm = quizResult.score;
         // Knockout profile scoring (from application answers)
@@ -121,28 +125,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         if (appData?.knockout_answers) {
           const ka = appData.knockout_answers as Record<string, string>;
           let pts = 0;
-          // Availability: yes=10
           if (ka.availability === 'yes') pts += 10;
-          // Internet: yes=10
           if (ka.internet === 'yes') pts += 10;
-          // French: native=10, fluent=7, intermediate=3, beginner=0
           const frenchMap: Record<string, number> = { native: 10, fluent: 7, intermediate: 3, beginner: 0 };
           pts += frenchMap[ka.french_level] ?? 5;
-          // Call experience: yes_2plus=10, yes_1_2=7, yes_less_1=3, none=0
           const expMap: Record<string, number> = { yes_2: 10, yes_1: 7, yes_less_1: 3, none: 0 };
           pts += expMap[ka.call_experience] ?? 5;
           profileScore = Math.round((pts / 40) * 100);
         }
 
-        // Composite: Big Five 40% + Quiz 30% + Profile 30%
-        const composite = Math.round(bigFiveNorm * 0.4 + quizNorm * 0.3 + profileScore * 0.3);
+        // Composite: Big Five 30% + Intelligence 25% + Quiz 20% + Profile 25%
+        const composite = Math.round(bigFiveNorm * 0.3 + intelligenceNorm * 0.25 + quizNorm * 0.2 + profileScore * 0.25);
 
         // Save composite score
         await supabase.from('test_results').insert({
           application_id: app.id,
           test_type: 'composite',
           score: composite,
-          result_data: { big_five: bigFiveNorm, quiz: quizNorm, profile: profileScore },
+          result_data: { big_five: bigFiveNorm, intelligence: intelligenceNorm, quiz: quizNorm, profile: profileScore },
           completed_at: new Date().toISOString(),
         });
 

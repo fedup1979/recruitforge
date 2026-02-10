@@ -11,24 +11,26 @@ import {
 } from '../../src/lib/scoring';
 
 describe('normalizeBigFive', () => {
-  it('normalizes minimum score (5) to ~14%', () => {
-    expect(normalizeBigFive(5)).toBe(14);
-  });
-
-  it('normalizes maximum score (35) to 100%', () => {
-    expect(normalizeBigFive(35)).toBe(100);
-  });
-
-  it('normalizes mid-range score (20) to ~57%', () => {
-    expect(normalizeBigFive(20)).toBe(57);
-  });
-
-  it('caps at 100 for scores above 35', () => {
-    expect(normalizeBigFive(40)).toBe(100);
+  it('passes through IPIP-NEO-120 scores (0-100)', () => {
+    expect(normalizeBigFive(75)).toBe(75);
   });
 
   it('handles 0', () => {
     expect(normalizeBigFive(0)).toBe(0);
+  });
+
+  it('handles 100', () => {
+    expect(normalizeBigFive(100)).toBe(100);
+  });
+
+  it('rounds decimal scores', () => {
+    expect(normalizeBigFive(67.4)).toBe(67);
+    expect(normalizeBigFive(67.5)).toBe(68);
+  });
+
+  it('falls back to TIPI-10 normalization for scores > 100', () => {
+    // Legacy path: (score / 35) * 100 capped at 100
+    expect(normalizeBigFive(105)).toBe(100);
   });
 });
 

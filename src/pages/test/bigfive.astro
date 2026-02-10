@@ -2,13 +2,15 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Test de personnalité — AMBITIA" description="Complétez le test Big Five pour évaluer votre profil.">
+<BaseLayout title="Test de personnalité — AMBITIA" description="Complétez le test IPIP-NEO-120 pour évaluer votre profil de personnalité.">
   <!-- Consent Modal -->
   <dialog id="consent-modal" class="modal modal-open">
     <div class="modal-box">
       <h3 class="text-lg font-bold">Consentement — Test de personnalité</h3>
       <p class="py-4 text-sm text-base-content/80">
-        Ce test établit un profil de personnalité utilisé pour évaluer votre compatibilité avec le poste. Vos résultats ne seront pas partagés avec des tiers. En continuant, vous acceptez ce traitement.
+        Ce test évalue votre profil de personnalité selon le modèle des cinq grands facteurs (Big Five).
+        Il comprend 120 affirmations et prend environ 15 minutes. Vos résultats sont confidentiels
+        et ne seront pas partagés avec des tiers. En continuant, vous acceptez ce traitement.
       </p>
       <div class="form-control">
         <label class="label cursor-pointer justify-start gap-3">
@@ -33,57 +35,46 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       <!-- Test content -->
       <div id="test-content" class="hidden">
         <h1 class="text-2xl font-bold text-base-content mb-2">Test de personnalité (Big Five)</h1>
-        <p class="text-base-content/60 mb-6">Indiquez dans quelle mesure chaque affirmation vous correspond.</p>
+        <p class="text-base-content/60 mb-6">Indiquez dans quelle mesure chaque affirmation vous décrit. Il n'y a pas de bonne ou mauvaise réponse.</p>
 
         <!-- Progress -->
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-sm text-base-content/50">Question <span id="current-q">1</span>/10</span>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-base-content/50">Page <span id="current-page">1</span>/<span id="total-pages">12</span></span>
           <span class="text-sm font-medium text-primary" id="progress-pct">0%</span>
         </div>
-        <progress id="test-progress" class="progress progress-primary w-full mb-8" value="0" max="100"></progress>
+        <progress id="test-progress" class="progress progress-primary w-full mb-6" value="0" max="100"></progress>
 
-        <!-- Question -->
-        <div id="question-container">
-          <p id="question-text" class="text-lg font-medium text-base-content mb-6"></p>
-          <div class="space-y-3" id="answer-options">
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="1" class="radio radio-primary" />
-              <span>1 — Pas du tout d'accord</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="2" class="radio radio-primary" />
-              <span>2 — Pas d'accord</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="3" class="radio radio-primary" />
-              <span>3 — Légèrement pas d'accord</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="4" class="radio radio-primary" />
-              <span>4 — Neutre</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="5" class="radio radio-primary" />
-              <span>5 — Légèrement d'accord</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="6" class="radio radio-primary" />
-              <span>6 — D'accord</span>
-            </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors">
-              <input type="radio" name="answer" value="7" class="radio radio-primary" />
-              <span>7 — Tout à fait d'accord</span>
-            </label>
-          </div>
-          <button id="next-btn" class="btn btn-primary w-full mt-6" disabled>Suivant</button>
+        <!-- Questions container (paginated) -->
+        <div id="questions-page" class="space-y-5">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Navigation buttons -->
+        <div id="nav-buttons" class="flex gap-3 mt-8">
+          <button id="prev-btn" class="btn btn-ghost flex-1" disabled>Précédent</button>
+          <button id="next-btn" class="btn btn-primary flex-1" disabled>Suivant</button>
+        </div>
+
+        <!-- Submitting state -->
+        <div id="submitting" class="text-center py-8 hidden">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-base-content/60 mt-4">Calcul de vos résultats...</p>
         </div>
 
         <!-- Completed state -->
-        <div id="completed" class="text-center py-8 hidden">
-          <div class="text-5xl mb-4">&#10003;</div>
-          <h2 class="text-2xl font-bold text-base-content mb-2">Test terminé !</h2>
-          <p class="text-base-content/60 mb-6">Vos résultats ont été enregistrés.</p>
-          <a href="/dashboard" class="btn btn-primary">Retour au tableau de bord</a>
+        <div id="completed" class="hidden">
+          <div class="text-center py-6">
+            <div class="text-5xl mb-4">&#10003;</div>
+            <h2 class="text-2xl font-bold text-base-content mb-2">Test terminé !</h2>
+            <p class="text-base-content/60 mb-6">Voici votre profil de personnalité.</p>
+          </div>
+
+          <!-- Results display -->
+          <div id="results-grid" class="space-y-4 mb-8">
+            <!-- Populated by JS -->
+          </div>
+
+          <a href="/dashboard" class="btn btn-primary w-full">Retour au tableau de bord</a>
         </div>
       </div>
     </div>
@@ -92,47 +83,46 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 <script>
   import { createClient } from '@supabase/supabase-js';
+  import {
+    items, ITEMS_PER_PAGE, TOTAL_PAGES,
+    LIKERT_LABELS, DOMAIN_LABELS, FACET_LABELS,
+    scoreBigFive,
+    type Domain,
+  } from '../../lib/bigfive-neo';
 
   const supabase = createClient(
     import.meta.env.PUBLIC_SUPABASE_URL,
     import.meta.env.PUBLIC_SUPABASE_ANON_KEY
   );
 
-  // TIPI-10 questions (Ten-Item Personality Inventory, French)
-  const questions = [
-    { id: 1, text: 'Je me vois comme quelqu\'un d\'extraverti, enthousiaste.', trait: 'E', reverse: false },
-    { id: 2, text: 'Je me vois comme quelqu\'un de critique, querelleur.', trait: 'A', reverse: true },
-    { id: 3, text: 'Je me vois comme quelqu\'un de fiable, discipliné.', trait: 'C', reverse: false },
-    { id: 4, text: 'Je me vois comme quelqu\'un d\'anxieux, facilement perturbé.', trait: 'N', reverse: false },
-    { id: 5, text: 'Je me vois comme quelqu\'un d\'ouvert aux expériences nouvelles, complexe.', trait: 'O', reverse: false },
-    { id: 6, text: 'Je me vois comme quelqu\'un de réservé, discret.', trait: 'E', reverse: true },
-    { id: 7, text: 'Je me vois comme quelqu\'un de sympathique, chaleureux.', trait: 'A', reverse: false },
-    { id: 8, text: 'Je me vois comme quelqu\'un de désorganisé, négligent.', trait: 'C', reverse: true },
-    { id: 9, text: 'Je me vois comme quelqu\'un de calme, émotionnellement stable.', trait: 'N', reverse: true },
-    { id: 10, text: 'Je me vois comme quelqu\'un de conventionnel, peu créatif.', trait: 'O', reverse: true },
-  ];
-
+  // DOM refs
   const consentModal = document.getElementById('consent-modal') as HTMLDialogElement;
   const consentCheckbox = document.getElementById('consent-checkbox') as HTMLInputElement;
   const consentAccept = document.getElementById('consent-accept') as HTMLButtonElement;
   const loadingDiv = document.getElementById('loading') as HTMLDivElement;
   const testContent = document.getElementById('test-content') as HTMLDivElement;
-  const questionText = document.getElementById('question-text') as HTMLParagraphElement;
-  const currentQSpan = document.getElementById('current-q') as HTMLSpanElement;
+  const questionsPage = document.getElementById('questions-page') as HTMLDivElement;
+  const currentPageSpan = document.getElementById('current-page') as HTMLSpanElement;
+  const totalPagesSpan = document.getElementById('total-pages') as HTMLSpanElement;
   const progressPct = document.getElementById('progress-pct') as HTMLSpanElement;
   const testProgress = document.getElementById('test-progress') as HTMLProgressElement;
+  const prevBtn = document.getElementById('prev-btn') as HTMLButtonElement;
   const nextBtn = document.getElementById('next-btn') as HTMLButtonElement;
+  const navButtons = document.getElementById('nav-buttons') as HTMLDivElement;
+  const submittingDiv = document.getElementById('submitting') as HTMLDivElement;
   const completedDiv = document.getElementById('completed') as HTMLDivElement;
-  const questionContainer = document.getElementById('question-container') as HTMLDivElement;
+  const resultsGrid = document.getElementById('results-grid') as HTMLDivElement;
 
-  let currentQuestion = 0;
+  let currentPage = 0;
   const answers: Record<number, number> = {};
   let applicationId: string | null = null;
 
-  // Get applicationId from URL query params
   const params = new URLSearchParams(window.location.search);
   applicationId = params.get('app');
 
+  totalPagesSpan.textContent = String(TOTAL_PAGES);
+
+  // ── Consent ─────────────────────────────────────────────────
   consentCheckbox?.addEventListener('change', () => {
     consentAccept.disabled = !consentCheckbox.checked;
   });
@@ -141,7 +131,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { window.location.href = '/login'; return; }
 
-    // Save consent
     await supabase.from('consents').insert({
       user_id: session.user.id,
       consent_type: 'big_five_test',
@@ -151,74 +140,198 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     consentModal.classList.remove('modal-open');
     consentModal.close();
-    showQuestion();
+    renderPage();
   });
 
-  function showQuestion() {
-    if (currentQuestion >= questions.length) {
-      submitTest();
-      return;
-    }
+  // ── Page rendering ──────────────────────────────────────────
+  function renderPage() {
+    const start = currentPage * ITEMS_PER_PAGE;
+    const pageItems = items.slice(start, start + ITEMS_PER_PAGE);
 
-    const q = questions[currentQuestion];
-    questionText.textContent = q.text;
-    currentQSpan.textContent = String(currentQuestion + 1);
+    questionsPage.innerHTML = pageItems.map((item, idx) => {
+      const globalIdx = start + idx + 1;
+      const savedAnswer = answers[item.id];
+      return `
+        <div class="card bg-base-200">
+          <div class="card-body p-4">
+            <p class="font-medium text-base-content mb-3">
+              <span class="text-primary font-bold">${globalIdx}.</span> ${item.text}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              ${LIKERT_LABELS.map(opt => `
+                <label class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-colors text-sm
+                  ${savedAnswer === opt.value ? 'bg-primary text-primary-content' : 'bg-base-300 hover:bg-base-content/10'}">
+                  <input type="radio" name="q${item.id}" value="${opt.value}"
+                    class="radio radio-xs radio-primary hidden"
+                    ${savedAnswer === opt.value ? 'checked' : ''} />
+                  <span>${opt.value}</span>
+                  <span class="hidden sm:inline">— ${opt.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-    const pct = Math.round((currentQuestion / questions.length) * 100);
-    progressPct.textContent = `${pct}%`;
-    testProgress.value = pct;
+    // Attach listeners
+    questionsPage.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const itemId = parseInt(radio.name.replace('q', ''));
+        answers[itemId] = parseInt(radio.value);
+        // Update visual selection
+        const card = radio.closest('.card')!;
+        card.querySelectorAll('label').forEach(lbl => {
+          const r = lbl.querySelector('input') as HTMLInputElement;
+          if (r.checked) {
+            lbl.classList.add('bg-primary', 'text-primary-content');
+            lbl.classList.remove('bg-base-300', 'hover:bg-base-content/10');
+          } else {
+            lbl.classList.remove('bg-primary', 'text-primary-content');
+            lbl.classList.add('bg-base-300', 'hover:bg-base-content/10');
+          }
+        });
+        updateButtons();
+      });
+    });
 
-    // Clear radio selection
-    document.querySelectorAll<HTMLInputElement>('input[name="answer"]').forEach(r => r.checked = false);
-    nextBtn.disabled = true;
+    updateProgress();
+    updateButtons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Enable next button when answer selected
-  document.querySelectorAll<HTMLInputElement>('input[name="answer"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      nextBtn.disabled = false;
-    });
+  function updateProgress() {
+    currentPageSpan.textContent = String(currentPage + 1);
+    const answered = Object.keys(answers).length;
+    const pct = Math.round((answered / items.length) * 100);
+    progressPct.textContent = `${pct}%`;
+    testProgress.value = pct;
+  }
+
+  function updateButtons() {
+    prevBtn.disabled = currentPage === 0;
+
+    // Check if all items on current page are answered
+    const start = currentPage * ITEMS_PER_PAGE;
+    const pageItems = items.slice(start, start + ITEMS_PER_PAGE);
+    const allAnswered = pageItems.every(item => answers[item.id] !== undefined);
+
+    const isLastPage = currentPage === TOTAL_PAGES - 1;
+    nextBtn.textContent = isLastPage ? 'Terminer' : 'Suivant';
+    nextBtn.disabled = !allAnswered;
+  }
+
+  // ── Navigation ──────────────────────────────────────────────
+  prevBtn.addEventListener('click', () => {
+    if (currentPage > 0) {
+      currentPage--;
+      renderPage();
+    }
   });
 
-  nextBtn?.addEventListener('click', () => {
-    const selected = document.querySelector<HTMLInputElement>('input[name="answer"]:checked');
-    if (!selected) return;
-
-    answers[questions[currentQuestion].id] = parseInt(selected.value);
-    currentQuestion++;
-    showQuestion();
+  nextBtn.addEventListener('click', () => {
+    if (currentPage < TOTAL_PAGES - 1) {
+      currentPage++;
+      renderPage();
+    } else {
+      submitTest();
+    }
   });
 
+  // ── Submit ──────────────────────────────────────────────────
   async function submitTest() {
-    questionContainer.classList.add('hidden');
-    testProgress.value = 100;
-    progressPct.textContent = '100%';
+    questionsPage.classList.add('hidden');
+    navButtons.classList.add('hidden');
+    submittingDiv.classList.remove('hidden');
 
-    // Calculate Big Five scores
-    const scores: Record<string, number> = { E: 0, A: 0, C: 0, N: 0, O: 0 };
-    questions.forEach(q => {
-      const val = answers[q.id] || 4;
-      scores[q.trait] += q.reverse ? (8 - val) : val;
-    });
-    // Average per trait (2 items each)
-    Object.keys(scores).forEach(k => { scores[k] = Math.round((scores[k] / 2) * 100) / 100; });
+    const result = scoreBigFive(answers);
 
-    const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+    // Build result_data for storage
+    const resultData: Record<string, any> = {
+      version: 'IPIP-NEO-120',
+      domains: {} as Record<string, any>,
+    };
+    const domainKeys: Domain[] = ['N', 'E', 'O', 'A', 'C'];
+    for (const d of domainKeys) {
+      const ds = result.domains[d];
+      resultData.domains[d] = {
+        score: ds.score,
+        label: DOMAIN_LABELS[d],
+        facets: {} as Record<string, any>,
+      };
+      for (const [fKey, fScore] of Object.entries(ds.facets)) {
+        resultData.domains[d].facets[fKey] = {
+          score: fScore.score,
+          label: FACET_LABELS[fKey],
+        };
+      }
+    }
 
     if (applicationId) {
       await supabase.from('test_results').insert({
         application_id: applicationId,
         test_type: 'big_five',
         answers,
-        score: totalScore,
-        result_data: scores,
+        score: result.overall,
+        result_data: resultData,
         completed_at: new Date().toISOString(),
       });
     }
 
+    submittingDiv.classList.add('hidden');
+    showResults(result);
+  }
+
+  // ── Results display ─────────────────────────────────────────
+  function showResults(result: ReturnType<typeof scoreBigFive>) {
+    testProgress.value = 100;
+    progressPct.textContent = '100%';
+
+    const domainColors: Record<Domain, string> = {
+      N: '#EF4444', E: '#F59E0B', O: '#8B5CF6', A: '#10B981', C: '#3B82F6',
+    };
+
+    resultsGrid.innerHTML = (['N', 'E', 'O', 'A', 'C'] as Domain[]).map(d => {
+      const ds = result.domains[d];
+      const color = domainColors[d];
+      const facetHtml = Object.entries(ds.facets).map(([key, f]) => `
+        <div class="flex items-center justify-between text-sm py-1">
+          <span class="text-base-content/70">${FACET_LABELS[key]}</span>
+          <div class="flex items-center gap-2">
+            <progress class="progress w-20 h-2" value="${f.score}" max="100"
+              style="--progress-color: ${color}"></progress>
+            <span class="font-medium w-8 text-right">${f.score}</span>
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="collapse collapse-arrow bg-base-200 rounded-box">
+          <input type="checkbox" />
+          <div class="collapse-title">
+            <div class="flex items-center justify-between pr-4">
+              <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full" style="background-color: ${color}"></div>
+                <span class="font-bold">${DOMAIN_LABELS[d]}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <progress class="progress w-24 h-3" value="${ds.score}" max="100"
+                  style="--progress-color: ${color}"></progress>
+                <span class="font-bold text-lg">${ds.score}<span class="text-sm text-base-content/50">/100</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="collapse-content">
+            <div class="pt-2 space-y-1">${facetHtml}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     completedDiv.classList.remove('hidden');
   }
 
+  // ── Init ────────────────────────────────────────────────────
   async function init() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { window.location.href = '/login'; return; }

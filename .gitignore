@@ -52,6 +52,9 @@ archive/
 test-results/
 playwright-report/
 
+# Test material (reference only, not part of the app)
+Tests recrutement/
+
 # Misc
 *.tgz
 .npm

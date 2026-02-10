@@ -3,8 +3,14 @@
  * Extracted from tests.astro and admin/candidates/detail.astro for testability.
  */
 
-/** Normalize Big Five raw score (TIPI-10 range ~5-35) to 0-100 */
+/** Normalize Big Five raw score to 0-100.
+ * IPIP-NEO-120: overall score is already 0-100.
+ * TIPI-10 (legacy): range ~5-35, normalize proportionally.
+ */
 export function normalizeBigFive(rawScore: number): number {
+  // IPIP-NEO-120 scores are already 0-100
+  if (rawScore >= 0 && rawScore <= 100) return Math.round(rawScore);
+  // Legacy TIPI-10 fallback
   return Math.min(100, Math.round((rawScore / 35) * 100));
 }
 
