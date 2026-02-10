@@ -9,7 +9,8 @@
     "astro": "astro",
     "typecheck": "astro check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.0",
@@ -22,7 +23,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.6",
+    "@playwright/test": "^1.58.2",
     "pg": "^8.18.0",
+    "serve": "^14.2.5",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

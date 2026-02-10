@@ -12,30 +12,14 @@
 - Bibliothèque suggérée : `astro-i18n` ou solution custom avec JSON de traductions
 - Pages à traduire : toutes (navbar, footer, homepage, about, jobs, dashboard, tests, admin)
 
-### Vérification domaine email Resend
-- Le domaine `ambitia.io` doit être vérifié dans le dashboard Resend pour que les emails transactionnels arrivent (pas en spam)
-- Configuration DNS requise : SPF, DKIM, DMARC
-- Action : Resend Dashboard > Domains > Add domain > Copier les records DNS > Ajouter dans GoDaddy
-- **NOTE** : Les templates email sont prêts (welcome, application_received, status_*, test_reminder, roleplay_invitation)
-
-### Déployer les Edge Functions sur Supabase
-- 3 Edge Functions prêtes dans le repo : `send-email`, `create-vapi-call`, `vapi-webhook`
-- À déployer via : `supabase functions deploy send-email` (etc.) ou depuis le dashboard Supabase
-- Le webhook Vapi doit être configuré dans le dashboard Vapi : URL = `https://gdvdvjymkakuoepyhajk.supabase.co/functions/v1/vapi-webhook`
-
 ---
 
 ## Priorité moyenne
 
-### Rate limiting Edge Functions
-- Les Edge Functions Supabase (send-email, create-vapi-call) n'ont pas de rate limiting
-- Risque : abus possible sur les endpoints publics
-- Solution : ajouter un rate limiter via Redis ou un compteur Supabase
-
-### Tests automatisés
-- Aucun test unitaire ou E2E actuellement
-- Priorité : tests RLS Supabase (`tests/rls/`), tests E2E critiques (inscription, candidature, tests)
-- Outils suggérés : Vitest (unit), Playwright (E2E)
+### Tests E2E (Playwright)
+- Tests unitaires en place (63 tests Vitest)
+- Besoin de tests E2E pour les parcours critiques (inscription, candidature, tests)
+- Playwright configuré, tests de base à étoffer
 
 ---
 
@@ -49,16 +33,37 @@
 - Ajouter un service worker basique pour le offline
 - Pas critique pour le MVP
 
-### Accessibilité (a11y)
-- Audit WCAG à faire
-- Vérifier les contrastes, les labels ARIA, la navigation clavier
+### Audit WCAG complet
+- Bases d'accessibilité en place (landmarks, aria-labels, skip-to-content, role="alert")
+- Reste : audit contrastes, navigation clavier complète, lecteur d'écran
 
 ---
 
-## Résolu (cette session)
+## Future Features (notées par François)
 
-- ~~Vrais graphiques Chart.js dans admin/stats~~ → Funnel bar, doughnut, timeline line chart avec Chart.js 4.4
-- ~~Schema.org JobPosting structured data~~ → JSON-LD injecté sur /jobs/detail
-- ~~Open Graph meta tags~~ → og:url, og:site_name, canonical URL dans BaseLayout
+### Vrai Big Five
+- Actuel : TIPI-10 (démo). Besoin : scores /100, noms complets des dimensions, sous-dimensions
+
+### Présentation vidéo
+- Grille d'évaluation admin avec inter-rater agreement
+
+### Matrices de Raven (QI)
+- Test démo pour un poste différent (pas Setter)
+
+### Pipeline Setter affiné
+- login → CV → expérience → vidéo (éval manuelle) → roleplay (shortlisted only)
+
+---
+
+## Résolu
+
+- ~~Vérification domaine Resend~~ → ambitia.io vérifié (DKIM, SPF, MX)
+- ~~Déployer Edge Functions~~ → 3 fonctions ACTIVE (send-email, create-vapi-call, vapi-webhook)
+- ~~Rate limiting Edge Functions~~ → In-memory rate limiter (send-email: 20/min, create-vapi-call: 5/min)
+- ~~Tests automatisés (unitaires)~~ → 63 tests Vitest (scoring, quiz, countries, status)
+- ~~Accessibilité de base~~ → Skip-to-content, landmarks, aria-labels, role="alert"
+- ~~Vrais graphiques Chart.js~~ → Funnel bar, doughnut, timeline avec Chart.js 4.4
+- ~~Schema.org JobPosting~~ → JSON-LD sur /jobs/detail
+- ~~Open Graph meta tags~~ → og:url, og:site_name, canonical URL
 - ~~Sitemap.xml~~ → @astrojs/sitemap configuré
 - ~~Favicon custom~~ → SVG AMBITIA branded

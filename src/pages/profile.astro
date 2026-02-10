@@ -15,10 +15,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h1 class="text-3xl font-bold text-base-content mb-8">Mon profil</h1>
 
         <!-- Toast messages -->
-        <div id="toast-success" class="alert alert-success mb-4 hidden">
+        <div id="toast-success" class="alert alert-success mb-4 hidden" role="status">
           <span>Profil mis à jour avec succès.</span>
         </div>
-        <div id="toast-error" class="alert alert-error mb-4 hidden">
+        <div id="toast-error" class="alert alert-error mb-4 hidden" role="alert">
           <span id="toast-error-text"></span>
         </div>
 
@@ -80,7 +80,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
         <div class="mt-6">
           <a href="/dashboard" class="btn btn-ghost btn-sm gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
             Retour au tableau de bord

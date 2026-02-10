@@ -48,6 +48,10 @@ coverage/
 archive/
 .last-branch
 
+# Playwright
+test-results/
+playwright-report/
+
 # Misc
 *.tgz
 .npm
