@@ -48,12 +48,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const testsList = document.getElementById('tests-list') as HTMLDivElement;
   const noAppDiv = document.getElementById('no-app') as HTMLDivElement;
 
-  const requiredTests = [
-    { type: 'big_five', label: 'Test de personnalité (Big Five)', url: '/test/bigfive', duration: '~15 min' },
-    { type: 'intelligence', label: 'Test de raisonnement logique', url: '/test/intelligence', duration: '~15 min' },
-    { type: 'quiz', label: 'Quiz connaissances produit', url: '/test/quiz', duration: '~10 min' },
-    { type: 'roleplay', label: 'Roleplay vocal (Simulation d\'appel)', url: '/test/roleplay', duration: '~15 min', requiresStatus: 'interview' },
+  // Hardcoded fallback tests (backward compatibility for jobs without job_tests rows)
+  const fallbackTests = [
+    { slug: 'big_five', label: 'Test de personnalite (Big Five)', url: '/test/bigfive', duration: '~15 min', weight: 0.30 },
+    { slug: 'intelligence', label: 'Test de raisonnement logique', url: '/test/intelligence', duration: '~15 min', weight: 0.25 },
+    { slug: 'quiz', label: 'Quiz connaissances produit', url: '/test/quiz', duration: '~10 min', weight: 0.20 },
+    { slug: 'roleplay', label: 'Roleplay vocal (Simulation d\'appel)', url: '/test/roleplay', duration: '~15 min', weight: 0.25, requiresStatus: 'interview' },
   ];
+
+  interface PipelineTest {
+    slug: string;
+    label: string;
+    url: string;
+    duration: string;
+    weight: number;
+    requiresStatus?: string;
+    threshold?: number;
+  }
 
   async function init() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -77,6 +88,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     const app = applications[0];
 
+    // Try to load dynamic pipeline from job_tests + test_definitions
+    let pipeline: PipelineTest[] = [];
+    const { data: jobTests } = await supabase
+      .from('job_tests')
+      .select('*, test_definitions(slug, label, url_template, duration_label)')
+      .eq('job_id', app.job_id)
+      .order('sort_order', { ascending: true });
+
+    if (jobTests && jobTests.length > 0) {
+      // Dynamic pipeline from DB
+      pipeline = jobTests.map((jt: any) => ({
+        slug: jt.test_definitions.slug,
+        label: jt.test_definitions.label,
+        url: jt.test_definitions.url_template,
+        duration: jt.test_definitions.duration_label || '',
+        weight: jt.weight,
+        requiresStatus: jt.requires_status || undefined,
+        threshold: jt.threshold ?? undefined,
+      }));
+    } else {
+      // Fallback to hardcoded pipeline
+      pipeline = fallbackTests;
+    }
+
     // Get completed tests
     const { data: results } = await supabase
       .from('test_results')
@@ -91,67 +126,73 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     });
 
     // Filter tests visible for this application status
-    const visibleTests = requiredTests.filter(t => {
-      if ((t as any).requiresStatus && app.status !== (t as any).requiresStatus) return false;
+    const visibleTests = pipeline.filter(t => {
+      if (t.requiresStatus && app.status !== t.requiresStatus) return false;
       return true;
     });
 
-    // Check if base tests (big_five, intelligence, quiz) are completed
-    const baseTests = requiredTests.filter(t => !(t as any).requiresStatus);
-    const baseCompleted = baseTests.every(t => completedMap.has(t.type));
+    // Check if base tests (those not requiring a specific status) are completed
+    const baseTests = pipeline.filter(t => !t.requiresStatus);
+    const baseCompleted = baseTests.every(t => completedMap.has(t.slug));
 
     // Update application status if base tests done and status is pending/testing
     if (baseCompleted && (app.status === 'pending' || app.status === 'testing')) {
-      // Calculate composite score
-      const bigFiveResult = completedMap.get('big_five');
-      const quizResult = completedMap.get('quiz');
-      const intelligenceResult = completedMap.get('intelligence');
+      // Calculate composite score using dynamic weights
+      const { data: appData } = await supabase
+        .from('applications')
+        .select('knockout_answers')
+        .eq('id', app.id)
+        .single();
 
-      if (bigFiveResult && quizResult && intelligenceResult && !completedMap.has('composite')) {
-        // Big Five: IPIP-NEO-120 scores are already 0-100
-        const bigFiveNorm = Math.min(100, Math.round(bigFiveResult.score));
-        // Intelligence: already 0-100
-        const intelligenceNorm = Math.min(100, Math.round(intelligenceResult.score));
-        // Quiz: already 0-100
-        const quizNorm = quizResult.score;
-        // Knockout profile scoring (from application answers)
-        const { data: appData } = await supabase
-          .from('applications')
-          .select('knockout_answers')
-          .eq('id', app.id)
-          .single();
+      let profileScore = 50;
+      if (appData?.knockout_answers) {
+        const ka = appData.knockout_answers as Record<string, string>;
+        let pts = 0;
+        if (ka.availability === 'yes') pts += 10;
+        if (ka.internet === 'yes') pts += 10;
+        const frenchMap: Record<string, number> = { native: 10, fluent: 7, intermediate: 3, beginner: 0 };
+        pts += frenchMap[ka.french_level] ?? 5;
+        const expMap: Record<string, number> = { yes_2: 10, yes_1: 7, yes_less_1: 3, none: 0 };
+        pts += expMap[ka.call_experience] ?? 5;
+        profileScore = Math.round((pts / 40) * 100);
+      }
 
-        let profileScore = 50; // default
-        if (appData?.knockout_answers) {
-          const ka = appData.knockout_answers as Record<string, string>;
-          let pts = 0;
-          if (ka.availability === 'yes') pts += 10;
-          if (ka.internet === 'yes') pts += 10;
-          const frenchMap: Record<string, number> = { native: 10, fluent: 7, intermediate: 3, beginner: 0 };
-          pts += frenchMap[ka.french_level] ?? 5;
-          const expMap: Record<string, number> = { yes_2: 10, yes_1: 7, yes_less_1: 3, none: 0 };
-          pts += expMap[ka.call_experience] ?? 5;
-          profileScore = Math.round((pts / 40) * 100);
+      if (!completedMap.has('composite')) {
+        // Build breakdown from dynamic pipeline
+        const breakdown: Record<string, number> = { profile: profileScore };
+        let totalWeight = 0.25; // Profile weight
+        let weightedSum = profileScore * 0.25;
+
+        for (const test of baseTests) {
+          const result = completedMap.get(test.slug);
+          if (result) {
+            const score = Math.min(100, Math.round(result.score));
+            breakdown[test.slug] = score;
+            weightedSum += score * test.weight;
+            totalWeight += test.weight;
+          }
         }
 
-        // Composite: Big Five 30% + Intelligence 25% + Quiz 20% + Profile 25%
-        const composite = Math.round(bigFiveNorm * 0.3 + intelligenceNorm * 0.25 + quizNorm * 0.2 + profileScore * 0.25);
+        // Normalize weights
+        const composite = totalWeight > 0 ? Math.round(weightedSum / totalWeight * (totalWeight / totalWeight)) : profileScore;
+        const normalizedComposite = Math.round(weightedSum / totalWeight);
 
-        // Save composite score
+        // Save composite score with weights used
         await supabase.from('test_results').insert({
           application_id: app.id,
           test_type: 'composite',
-          score: composite,
-          result_data: { big_five: bigFiveNorm, intelligence: intelligenceNorm, quiz: quizNorm, profile: profileScore },
+          score: normalizedComposite,
+          result_data: {
+            ...breakdown,
+            _weights: Object.fromEntries(baseTests.map(t => [t.slug, t.weight])),
+          },
           completed_at: new Date().toISOString(),
         });
 
         // Auto-decision based on composite score
-        if (composite < 40) {
-          // Auto-reject
+        if (normalizedComposite < 40) {
           await supabase.from('applications').update({ status: 'rejected' }).eq('id', app.id);
         } else {
-          // Move to review (admin will decide)
           await supabase.from('applications').update({ status: 'review' }).eq('id', app.id);
         }
       } else if (!completedMap.has('composite')) {
@@ -165,7 +206,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     testsList.innerHTML = visibleTests.map(test => {
-      const completed = completedMap.get(test.type);
+      const completed = completedMap.get(test.slug);
       if (completed) {
         const date = new Date(completed.completed_at).toLocaleDateString('fr-FR');
         return `

@@ -1,0 +1,438 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Présentation vidéo — AMBITIA" description="Enregistrez votre présentation vidéo.">
+  <section class="py-12 px-4">
+    <div class="max-w-lg mx-auto">
+      <!-- Loading -->
+      <div id="loading" class="text-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+      <!-- Step 1: Explanation + Consent -->
+      <div id="step-explain" class="hidden">
+        <h1 class="text-2xl font-bold text-base-content mb-4">Présentation vidéo</h1>
+        <div class="card bg-base-200 mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-base">Instructions</h2>
+            <ul class="list-disc list-inside space-y-1 text-sm text-base-content/70">
+              <li>Présentez-vous brièvement (nom, parcours, situation actuelle)</li>
+              <li>Expliquez pourquoi ce poste vous intéresse</li>
+              <li>Décrivez votre expérience pertinente</li>
+              <li>Durée recommandée : 2 à 5 minutes</li>
+            </ul>
+            <div class="divider my-2"></div>
+            <h3 class="font-medium text-sm">Conseils techniques</h3>
+            <ul class="list-disc list-inside space-y-1 text-xs text-base-content/50">
+              <li>Assurez-vous d'être dans un endroit calme et bien éclairé</li>
+              <li>Votre téléphone ou webcam est suffisant</li>
+              <li>Regardez la caméra et parlez clairement</li>
+              <li>Vous pouvez recommencer autant de fois que nécessaire</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Existing video reuse -->
+        <div id="existing-video" class="hidden mb-4">
+          <div class="card bg-primary/10 border border-primary/20">
+            <div class="card-body py-3">
+              <h3 class="font-medium text-sm">Vous avez déjà une vidéo enregistrée</h3>
+              <div class="flex gap-2 mt-2">
+                <label class="label cursor-pointer gap-2">
+                  <input type="radio" name="video-choice" value="reuse" class="radio radio-primary radio-sm" checked />
+                  <span class="label-text text-sm">Réutiliser la vidéo existante</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                  <input type="radio" name="video-choice" value="new" class="radio radio-primary radio-sm" />
+                  <span class="label-text text-sm">Enregistrer une nouvelle vidéo</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consent -->
+        <div class="form-control mb-4">
+          <label class="label cursor-pointer gap-3 justify-start">
+            <input type="checkbox" id="consent-checkbox" class="checkbox checkbox-primary" />
+            <span class="label-text text-sm">J'accepte que ma vidéo soit enregistrée et utilisée dans le cadre de l'évaluation de ma candidature. Les données sont conservées conformément à notre politique de confidentialité (RGPD).</span>
+          </label>
+        </div>
+
+        <button id="btn-start" class="btn btn-primary w-full" disabled>Continuer</button>
+      </div>
+
+      <!-- Step 2: Record / Upload -->
+      <div id="step-record" class="hidden">
+        <h1 class="text-2xl font-bold text-base-content mb-4">Enregistrer votre vidéo</h1>
+
+        <!-- Tabs -->
+        <div class="tabs tabs-boxed mb-4">
+          <button class="tab tab-active" id="tab-record">Enregistrer</button>
+          <button class="tab" id="tab-upload">Importer un fichier</button>
+        </div>
+
+        <!-- Record tab -->
+        <div id="panel-record">
+          <div class="bg-black rounded-xl overflow-hidden mb-4 aspect-video relative">
+            <video id="preview-video" class="w-full h-full object-cover" autoplay muted playsinline></video>
+            <div id="recording-indicator" class="hidden absolute top-3 right-3 flex items-center gap-2 bg-error/90 text-white px-2 py-1 rounded text-xs">
+              <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              <span id="recording-timer">0:00</span>
+            </div>
+          </div>
+          <div id="record-controls" class="flex gap-2 justify-center">
+            <button id="btn-rec-start" class="btn btn-error btn-sm gap-1">Démarrer l'enregistrement</button>
+          </div>
+          <div id="review-controls" class="hidden">
+            <div class="bg-black rounded-xl overflow-hidden mb-4 aspect-video">
+              <video id="playback-video" class="w-full h-full object-cover" controls></video>
+            </div>
+            <div class="flex gap-2 justify-center">
+              <button id="btn-rerecord" class="btn btn-outline btn-sm">Recommencer</button>
+              <button id="btn-validate" class="btn btn-primary btn-sm">Valider et envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload tab -->
+        <div id="panel-upload" class="hidden">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Fichier vidéo (MP4 ou WebM, max 100 Mo)</span></label>
+            <input type="file" id="video-file" accept="video/mp4,video/webm" class="file-input file-input-bordered w-full" />
+          </div>
+          <progress id="upload-progress" class="progress progress-primary w-full mt-4 hidden" value="0" max="100"></progress>
+          <button id="btn-upload" class="btn btn-primary w-full mt-4" disabled>Envoyer le fichier</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Completion -->
+      <div id="step-done" class="hidden text-center py-8">
+        <div class="text-5xl mb-4">&#x2705;</div>
+        <h1 class="text-2xl font-bold text-base-content mb-2">Vidéo enregistrée</h1>
+        <p class="text-base-content/60 mb-6">Votre présentation vidéo a été envoyée avec succès.</p>
+        <a href="/tests" class="btn btn-primary">Retour aux tests</a>
+      </div>
+
+      <!-- Error state -->
+      <div id="error-state" class="hidden">
+        <div class="alert alert-error">
+          <span id="error-text">Une erreur est survenue.</span>
+        </div>
+        <a href="/tests" class="btn btn-ghost btn-sm mt-4">Retour aux tests</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const params = new URLSearchParams(window.location.search);
+  const appId = params.get('app');
+
+  let mediaRecorder: MediaRecorder | null = null;
+  let recordedChunks: Blob[] = [];
+  let recordedBlob: Blob | null = null;
+  let stream: MediaStream | null = null;
+  let timerInterval: number | null = null;
+  let recordingSeconds = 0;
+  let existingDocId: string | null = null;
+  let existingStoragePath: string | null = null;
+
+  async function init() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+    if (!appId) { showError('Paramètre de candidature manquant.'); return; }
+
+    // Check for existing video documents
+    const { data: existingDocs } = await supabase
+      .from('candidate_documents')
+      .select('id, file_name, storage_path, created_at')
+      .eq('user_id', session.user.id)
+      .eq('doc_type', 'video')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    document.getElementById('loading')!.classList.add('hidden');
+    document.getElementById('step-explain')!.classList.remove('hidden');
+
+    if (existingDocs && existingDocs.length > 0) {
+      existingDocId = existingDocs[0].id;
+      existingStoragePath = existingDocs[0].storage_path;
+      document.getElementById('existing-video')!.classList.remove('hidden');
+    }
+  }
+
+  // Consent checkbox
+  const consentCb = document.getElementById('consent-checkbox') as HTMLInputElement;
+  const btnStart = document.getElementById('btn-start') as HTMLButtonElement;
+  consentCb.addEventListener('change', () => {
+    btnStart.disabled = !consentCb.checked;
+  });
+
+  // Start button → go to record/upload step
+  btnStart.addEventListener('click', async () => {
+    const choice = (document.querySelector('input[name="video-choice"]:checked') as HTMLInputElement)?.value;
+    if (choice === 'reuse' && existingStoragePath) {
+      // Reuse existing video
+      await reuseExistingVideo();
+      return;
+    }
+
+    // Save consent
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('consents').insert({
+        user_id: session.user.id,
+        consent_type: 'video_recording',
+        granted: true,
+      }).then(() => {});
+    }
+
+    document.getElementById('step-explain')!.classList.add('hidden');
+    document.getElementById('step-record')!.classList.remove('hidden');
+  });
+
+  async function reuseExistingVideo() {
+    // Create test_results entry referencing existing video
+    const { error } = await supabase.from('test_results').upsert({
+      application_id: appId,
+      test_type: 'video_presentation',
+      score: null,
+      result_data: {
+        document_id: existingDocId,
+        storage_path: existingStoragePath,
+        reused: true,
+      },
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'application_id,test_type' });
+
+    if (error) {
+      showError('Erreur: ' + error.message);
+    } else {
+      document.getElementById('step-explain')!.classList.add('hidden');
+      document.getElementById('step-done')!.classList.remove('hidden');
+    }
+  }
+
+  // Tab switching
+  document.getElementById('tab-record')!.addEventListener('click', () => {
+    document.getElementById('tab-record')!.classList.add('tab-active');
+    document.getElementById('tab-upload')!.classList.remove('tab-active');
+    document.getElementById('panel-record')!.classList.remove('hidden');
+    document.getElementById('panel-upload')!.classList.add('hidden');
+  });
+
+  document.getElementById('tab-upload')!.addEventListener('click', () => {
+    document.getElementById('tab-upload')!.classList.add('tab-active');
+    document.getElementById('tab-record')!.classList.remove('tab-active');
+    document.getElementById('panel-upload')!.classList.remove('hidden');
+    document.getElementById('panel-record')!.classList.add('hidden');
+  });
+
+  // Recording
+  document.getElementById('btn-rec-start')!.addEventListener('click', async () => {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const previewVideo = document.getElementById('preview-video') as HTMLVideoElement;
+      previewVideo.srcObject = stream;
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(recordedBlob);
+        const playbackVideo = document.getElementById('playback-video') as HTMLVideoElement;
+        playbackVideo.src = url;
+
+        // Stop preview
+        stream?.getTracks().forEach(t => t.stop());
+        document.getElementById('record-controls')!.classList.add('hidden');
+        (document.getElementById('preview-video') as HTMLVideoElement).style.display = 'none';
+        document.getElementById('recording-indicator')!.classList.add('hidden');
+        document.getElementById('review-controls')!.classList.remove('hidden');
+        clearInterval(timerInterval!);
+      };
+
+      mediaRecorder.start();
+      recordingSeconds = 0;
+      document.getElementById('recording-indicator')!.classList.remove('hidden');
+      timerInterval = window.setInterval(() => {
+        recordingSeconds++;
+        const m = Math.floor(recordingSeconds / 60);
+        const s = recordingSeconds % 60;
+        document.getElementById('recording-timer')!.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+      }, 1000);
+
+      // Change button to stop
+      const btn = document.getElementById('btn-rec-start')!;
+      btn.textContent = 'Arrêter';
+      btn.className = 'btn btn-warning btn-sm';
+      btn.onclick = () => {
+        mediaRecorder?.stop();
+      };
+    } catch (err) {
+      showError('Impossible d\'accéder à la caméra. Vérifiez les permissions de votre navigateur.');
+    }
+  });
+
+  // Re-record
+  document.getElementById('btn-rerecord')!.addEventListener('click', () => {
+    recordedBlob = null;
+    document.getElementById('review-controls')!.classList.add('hidden');
+    document.getElementById('record-controls')!.classList.remove('hidden');
+    const previewVideo = document.getElementById('preview-video') as HTMLVideoElement;
+    previewVideo.style.display = '';
+    const btn = document.getElementById('btn-rec-start')!;
+    btn.textContent = 'Démarrer l\'enregistrement';
+    btn.className = 'btn btn-error btn-sm gap-1';
+  });
+
+  // Validate recorded video
+  document.getElementById('btn-validate')!.addEventListener('click', async () => {
+    if (!recordedBlob) return;
+    const btn = document.getElementById('btn-validate') as HTMLButtonElement;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    await uploadVideo(recordedBlob, 'video/webm', 'presentation.webm');
+  });
+
+  // File upload
+  const videoFileInput = document.getElementById('video-file') as HTMLInputElement;
+  videoFileInput.addEventListener('change', () => {
+    const file = videoFileInput.files?.[0];
+    const btn = document.getElementById('btn-upload') as HTMLButtonElement;
+    if (file) {
+      if (!['video/mp4', 'video/webm'].includes(file.type)) {
+        showError('Format non supporté. Utilisez MP4 ou WebM.');
+        videoFileInput.value = '';
+        btn.disabled = true;
+        return;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        showError('Le fichier ne doit pas dépasser 100 Mo.');
+        videoFileInput.value = '';
+        btn.disabled = true;
+        return;
+      }
+      btn.disabled = false;
+    } else {
+      btn.disabled = true;
+    }
+  });
+
+  document.getElementById('btn-upload')!.addEventListener('click', async () => {
+    const file = videoFileInput.files?.[0];
+    if (!file) return;
+    const btn = document.getElementById('btn-upload') as HTMLButtonElement;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    await uploadVideo(file, file.type, file.name);
+  });
+
+  async function uploadVideo(blob: Blob, mimeType: string, originalName: string) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { window.location.href = '/login'; return; }
+
+    const progress = document.getElementById('upload-progress') as HTMLProgressElement;
+    progress.classList.remove('hidden');
+    progress.value = 20;
+
+    const ext = mimeType === 'video/mp4' ? 'mp4' : 'webm';
+    const fileName = `${crypto.randomUUID()}.${ext}`;
+    const storagePath = `${session.user.id}/video/${fileName}`;
+
+    progress.value = 40;
+
+    const { error: uploadError } = await supabase.storage
+      .from('candidates')
+      .upload(storagePath, blob, { contentType: mimeType });
+
+    if (uploadError) {
+      showError('Erreur upload: ' + uploadError.message);
+      return;
+    }
+
+    progress.value = 60;
+
+    // Create candidate_documents entry
+    const { data: doc, error: docError } = await supabase
+      .from('candidate_documents')
+      .insert({
+        user_id: session.user.id,
+        doc_type: 'video',
+        file_name: originalName,
+        storage_path: storagePath,
+        mime_type: mimeType,
+        file_size_bytes: blob.size,
+      })
+      .select('id')
+      .single();
+
+    if (docError) {
+      showError('Erreur document: ' + docError.message);
+      return;
+    }
+
+    progress.value = 80;
+
+    // Create test_results entry
+    const { error: resultError } = await supabase.from('test_results').upsert({
+      application_id: appId,
+      test_type: 'video_presentation',
+      score: null,
+      result_data: {
+        document_id: doc.id,
+        storage_path: storagePath,
+        mime_type: mimeType,
+        file_size: blob.size,
+      },
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'application_id,test_type' });
+
+    if (resultError) {
+      showError('Erreur résultat: ' + resultError.message);
+      return;
+    }
+
+    progress.value = 100;
+
+    // Fire-and-forget: trigger transcription
+    fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/transcribe-video`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        documentId: doc.id,
+        storagePath,
+      }),
+    }).catch(() => {});
+
+    document.getElementById('step-record')!.classList.add('hidden');
+    document.getElementById('step-done')!.classList.remove('hidden');
+  }
+
+  function showError(msg: string) {
+    document.getElementById('loading')!.classList.add('hidden');
+    document.getElementById('step-explain')!.classList.add('hidden');
+    document.getElementById('step-record')!.classList.add('hidden');
+    document.getElementById('error-text')!.textContent = msg;
+    document.getElementById('error-state')!.classList.remove('hidden');
+  }
+
+  init();
+</script>

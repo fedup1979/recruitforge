@@ -8,6 +8,11 @@ import {
   calculateHumanScoreTotal,
   getHumanScoreVerdict,
   humanScoreToPercent,
+  calculateDynamicComposite,
+  calculatePersonalityFit,
+  calculateEvaluationScore,
+  calculateInterRaterAgreement,
+  calculateRankScore,
 } from '../../src/lib/scoring';
 
 describe('normalizeBigFive', () => {
@@ -106,16 +111,16 @@ describe('calculateProfileScore', () => {
 
 describe('calculateComposite', () => {
   it('calculates weighted average correctly', () => {
-    // 80*0.4 + 70*0.3 + 60*0.3 = 32 + 21 + 18 = 71
-    expect(calculateComposite(80, 70, 60)).toBe(71);
+    // 80*0.3 + 70*0.25 + 60*0.2 + 50*0.25 = 24 + 17.5 + 12 + 12.5 = 66
+    expect(calculateComposite(80, 70, 60, 50)).toBe(66);
   });
 
   it('returns 100 for all perfect scores', () => {
-    expect(calculateComposite(100, 100, 100)).toBe(100);
+    expect(calculateComposite(100, 100, 100, 100)).toBe(100);
   });
 
   it('returns 0 for all zero scores', () => {
-    expect(calculateComposite(0, 0, 0)).toBe(0);
+    expect(calculateComposite(0, 0, 0, 0)).toBe(0);
   });
 });
 
@@ -180,5 +185,107 @@ describe('humanScoreToPercent', () => {
 
   it('converts 0/30 to 0%', () => {
     expect(humanScoreToPercent(0)).toBe(0);
+  });
+});
+
+describe('calculateDynamicComposite', () => {
+  const jobTests = [
+    { test_definition_id: '1', slug: 'big_five', weight: 0.3, threshold: null, is_required: true },
+    { test_definition_id: '2', slug: 'intelligence', weight: 0.25, threshold: null, is_required: true },
+    { test_definition_id: '3', slug: 'quiz', weight: 0.2, threshold: 40, is_required: true },
+  ];
+
+  it('calculates weighted score with profile', () => {
+    const testScores = [
+      { slug: 'big_five', score: 80 },
+      { slug: 'intelligence', score: 70 },
+      { slug: 'quiz', score: 60 },
+    ];
+    const result = calculateDynamicComposite(testScores, jobTests, 50);
+    expect(result.composite).toBeGreaterThan(0);
+    expect(result.composite).toBeLessThanOrEqual(100);
+    expect(result.breakdown).toHaveProperty('profile', 50);
+    expect(result.passesThresholds).toBe(true);
+  });
+
+  it('detects threshold failure', () => {
+    const testScores = [
+      { slug: 'big_five', score: 80 },
+      { slug: 'intelligence', score: 70 },
+      { slug: 'quiz', score: 30 },
+    ];
+    const result = calculateDynamicComposite(testScores, jobTests, 50);
+    expect(result.passesThresholds).toBe(false);
+  });
+
+  it('handles empty test scores', () => {
+    const result = calculateDynamicComposite([], jobTests, 50);
+    expect(result.composite).toBe(50);
+  });
+});
+
+describe('calculatePersonalityFit', () => {
+  const profile = {
+    n_min: 10, n_max: 40,
+    e_min: 60, e_max: 90,
+    o_min: 40, o_max: 80,
+    a_min: 50, a_max: 90,
+    c_min: 60, c_max: 100,
+  };
+
+  it('returns 100 for perfect fit', () => {
+    const scores = { N: 25, E: 75, O: 60, A: 70, C: 80 };
+    expect(calculatePersonalityFit(scores, profile)).toBe(100);
+  });
+
+  it('penalizes out-of-range scores', () => {
+    const scores = { N: 80, E: 20, O: 10, A: 10, C: 10 };
+    const fit = calculatePersonalityFit(scores, profile);
+    expect(fit).toBeLessThan(50);
+  });
+});
+
+describe('calculateEvaluationScore', () => {
+  it('calculates correctly', () => {
+    const scores = { a: 4, b: 3, c: 5 };
+    const result = calculateEvaluationScore(scores, 3);
+    expect(result.total).toBe(12);
+    expect(result.maxScore).toBe(15);
+    expect(result.percent).toBe(80);
+  });
+});
+
+describe('calculateInterRaterAgreement', () => {
+  it('returns 100 for single evaluator', () => {
+    expect(calculateInterRaterAgreement([{ a: 4, b: 3 }])).toBe(100);
+  });
+
+  it('returns 100 for identical ratings', () => {
+    expect(calculateInterRaterAgreement([
+      { a: 4, b: 3 },
+      { a: 4, b: 3 },
+    ])).toBe(100);
+  });
+
+  it('returns lower score for disagreements', () => {
+    const agreement = calculateInterRaterAgreement([
+      { a: 5, b: 5 },
+      { a: 1, b: 1 },
+    ]);
+    expect(agreement).toBeLessThan(80);
+  });
+});
+
+describe('calculateRankScore', () => {
+  it('calculates average with completeness bonus', () => {
+    const result = calculateRankScore({ test1: 80, test2: 60, test3: null });
+    expect(result.completedCount).toBe(2);
+    expect(result.totalDimensions).toBe(3);
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('returns 0 for no completed dimensions', () => {
+    const result = calculateRankScore({ test1: null, test2: null });
+    expect(result.score).toBe(0);
   });
 });

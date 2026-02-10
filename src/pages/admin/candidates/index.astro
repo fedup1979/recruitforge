@@ -190,8 +190,23 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
     function getScore(app: any): number | null {
       if (!app.test_results || app.test_results.length === 0) return null;
+      // Prefer composite score, fall back to quiz score
+      const composite = app.test_results.find((t: any) => t.test_type === 'composite');
+      if (composite?.score != null) return composite.score;
       const quiz = app.test_results.find((t: any) => t.test_type === 'quiz');
       return quiz?.score ?? null;
+    }
+
+    function getDimensionBadges(app: any): string {
+      if (!app.test_results || app.test_results.length === 0) return '';
+      const badges: string[] = [];
+      const types = app.test_results.map((t: any) => t.test_type);
+      if (types.includes('big_five')) badges.push('<span class="badge badge-xs badge-ghost" title="Big Five">BF</span>');
+      if (types.includes('intelligence')) badges.push('<span class="badge badge-xs badge-ghost" title="Intelligence">IQ</span>');
+      if (types.includes('quiz')) badges.push('<span class="badge badge-xs badge-ghost" title="Quiz">Q</span>');
+      if (types.includes('video_presentation')) badges.push('<span class="badge badge-xs badge-ghost" title="Video">V</span>');
+      if (types.includes('roleplay') || types.some((t: string) => t.startsWith('roleplay_'))) badges.push('<span class="badge badge-xs badge-ghost" title="Roleplay">RP</span>');
+      return badges.join(' ');
     }
 
     function applyFilters() {
@@ -280,7 +295,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             <td class="cursor-pointer row-link">${profile?.country || '—'}</td>
             <td class="cursor-pointer row-link">${job?.title || '—'}</td>
             <td><span class="badge badge-sm ${status.class}">${status.label}</span></td>
-            <td class="cursor-pointer row-link">${scoreDisplay}</td>
+            <td class="cursor-pointer row-link">${scoreDisplay} ${getDimensionBadges(app)}</td>
             <td class="text-sm cursor-pointer row-link">${date}</td>
           </tr>
         `;

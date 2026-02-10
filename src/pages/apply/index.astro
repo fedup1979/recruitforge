@@ -94,15 +94,21 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             </select>
           </div>
 
-          <!-- CV Upload -->
+          <!-- CV Upload with reuse option -->
           <div class="form-control">
             <label class="label">
               <span class="label-text font-medium">CV (PDF, max 5 Mo)</span>
             </label>
-            <input type="file" id="cv-file" name="cv" accept=".pdf" class="file-input file-input-bordered w-full" />
-            <label class="label">
-              <span class="label-text-alt text-base-content/50">Format PDF uniquement</span>
-            </label>
+            <!-- Existing CVs radio (populated by JS) -->
+            <div id="cv-reuse-options" class="hidden mb-3 space-y-2">
+              <!-- Populated by JS -->
+            </div>
+            <div id="cv-upload-section">
+              <input type="file" id="cv-file" name="cv" accept=".pdf" class="file-input file-input-bordered w-full" />
+              <label class="label">
+                <span class="label-text-alt text-base-content/50">Format PDF uniquement</span>
+              </label>
+            </div>
             <!-- Upload progress -->
             <progress id="upload-progress" class="progress progress-primary w-full hidden" value="0" max="100"></progress>
           </div>
@@ -224,6 +230,49 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     (document.getElementById('job-id') as HTMLInputElement).value = job.id;
     (document.getElementById('back-link') as HTMLAnchorElement).href = `/jobs/detail?id=${job.id}`;
 
+    // Check for existing CVs
+    const { data: existingCvs } = await supabase
+      .from('candidate_documents')
+      .select('id, file_name, storage_path, created_at')
+      .eq('user_id', session.user.id)
+      .eq('doc_type', 'cv')
+      .order('created_at', { ascending: false });
+
+    if (existingCvs && existingCvs.length > 0) {
+      const reuseDiv = document.getElementById('cv-reuse-options')!;
+      reuseDiv.classList.remove('hidden');
+      reuseDiv.innerHTML = existingCvs.map((cv, idx) => {
+        const date = new Date(cv.created_at).toLocaleDateString('fr-FR');
+        return `
+          <label class="label cursor-pointer gap-2 justify-start bg-base-200 rounded-lg px-3 py-2">
+            <input type="radio" name="cv-source" value="${cv.storage_path}" class="radio radio-primary radio-sm cv-source-radio" ${idx === 0 ? 'checked' : ''} />
+            <span class="label-text text-sm">${cv.file_name} <span class="text-base-content/50">(${date})</span></span>
+          </label>
+        `;
+      }).join('') + `
+        <label class="label cursor-pointer gap-2 justify-start bg-base-200 rounded-lg px-3 py-2">
+          <input type="radio" name="cv-source" value="new" class="radio radio-primary radio-sm cv-source-radio" />
+          <span class="label-text text-sm">Importer un nouveau CV</span>
+        </label>
+      `;
+
+      // Toggle file input visibility based on selection
+      reuseDiv.querySelectorAll('.cv-source-radio').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const val = (radio as HTMLInputElement).value;
+          const uploadSection = document.getElementById('cv-upload-section')!;
+          if (val === 'new') {
+            uploadSection.classList.remove('hidden');
+          } else {
+            uploadSection.classList.add('hidden');
+          }
+        });
+      });
+
+      // Initially hide the file input if reusing
+      document.getElementById('cv-upload-section')!.classList.add('hidden');
+    }
+
     formContent.classList.remove('hidden');
   }
 
@@ -251,45 +300,83 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     const jobId = (document.getElementById('job-id') as HTMLInputElement).value;
 
-    // Upload CV if provided
+    // Determine CV source: reuse existing or upload new
     let cvUrl: string | null = null;
-    const cvFile = cvFileInput.files?.[0];
-    if (cvFile) {
-      if (cvFile.type !== 'application/pdf') {
-        showError('Seuls les fichiers PDF sont acceptés.');
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-        return;
-      }
-      if (cvFile.size > 5 * 1024 * 1024) {
-        showError('Le fichier ne doit pas dépasser 5 Mo.');
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-        return;
-      }
+    const cvSourceRadio = document.querySelector('input[name="cv-source"]:checked') as HTMLInputElement | null;
+    const cvSource = cvSourceRadio?.value;
 
+    if (cvSource && cvSource !== 'new') {
+      // Reuse existing CV
+      cvUrl = cvSource;
       uploadProgress.classList.remove('hidden');
-      uploadProgress.value = 30;
-
-      const fileName = `${crypto.randomUUID()}.pdf`;
-      const filePath = `${session.user.id}/cv/${fileName}`;
-
-      uploadProgress.value = 50;
-
-      const { error: uploadError } = await supabase.storage
-        .from('candidates')
-        .upload(filePath, cvFile, { contentType: 'application/pdf' });
-
-      if (uploadError) {
-        showError(`Erreur upload CV: ${uploadError.message}`);
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-        uploadProgress.classList.add('hidden');
-        return;
-      }
-
       uploadProgress.value = 80;
-      cvUrl = filePath;
+    } else {
+      // Upload new CV
+      const cvFile = cvFileInput.files?.[0];
+      if (cvFile) {
+        if (cvFile.type !== 'application/pdf') {
+          showError('Seuls les fichiers PDF sont acceptés.');
+          submitBtn.classList.remove('loading');
+          submitBtn.disabled = false;
+          return;
+        }
+        if (cvFile.size > 5 * 1024 * 1024) {
+          showError('Le fichier ne doit pas dépasser 5 Mo.');
+          submitBtn.classList.remove('loading');
+          submitBtn.disabled = false;
+          return;
+        }
+
+        uploadProgress.classList.remove('hidden');
+        uploadProgress.value = 30;
+
+        const fileName = `${crypto.randomUUID()}.pdf`;
+        const filePath = `${session.user.id}/cv/${fileName}`;
+
+        uploadProgress.value = 50;
+
+        const { error: uploadError } = await supabase.storage
+          .from('candidates')
+          .upload(filePath, cvFile, { contentType: 'application/pdf' });
+
+        if (uploadError) {
+          showError(`Erreur upload CV: ${uploadError.message}`);
+          submitBtn.classList.remove('loading');
+          submitBtn.disabled = false;
+          uploadProgress.classList.add('hidden');
+          return;
+        }
+
+        uploadProgress.value = 70;
+
+        // Create candidate_documents entry for the new CV
+        const { data: cvDoc } = await supabase.from('candidate_documents').insert({
+          user_id: session.user.id,
+          doc_type: 'cv',
+          file_name: cvFile.name,
+          storage_path: filePath,
+          mime_type: 'application/pdf',
+          file_size_bytes: cvFile.size,
+        }).select('id').single();
+
+        uploadProgress.value = 80;
+        cvUrl = filePath;
+
+        // Fire-and-forget: trigger CV parsing
+        if (cvDoc?.id) {
+          fetch(`${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/parse-cv`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              documentId: cvDoc.id,
+              storagePath: filePath,
+            }),
+          }).catch(() => {});
+        }
+      }
     }
 
     uploadProgress.value = 90;

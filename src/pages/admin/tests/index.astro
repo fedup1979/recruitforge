@@ -1,0 +1,204 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Catalogue de tests — AMBITIA Admin">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold text-base-content">Catalogue de tests</h1>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="flex items-center justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
+
+  <!-- Tests list -->
+  <div id="tests-list" class="hidden space-y-4">
+    <!-- Populated by JS -->
+  </div>
+  <div id="no-tests" class="text-center py-12 text-base-content/50 hidden">
+    Aucun test disponible.
+  </div>
+
+  <!-- Edit modal -->
+  <dialog id="test-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+      <h3 class="font-bold text-lg" id="modal-title">Modifier le test</h3>
+      <form id="test-form" class="space-y-4 mt-4">
+        <input type="hidden" id="form-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="label"><span class="label-text">Label (nom affiché)</span></label>
+            <input type="text" id="form-label" class="input input-bordered w-full" required />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Slug (identifiant)</span></label>
+            <input type="text" id="form-slug" class="input input-bordered w-full" disabled />
+          </div>
+        </div>
+        <div>
+          <label class="label"><span class="label-text">Description</span></label>
+          <textarea id="form-description" class="textarea textarea-bordered w-full" rows="2"></textarea>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="label"><span class="label-text">Durée estimée</span></label>
+            <input type="text" id="form-duration" class="input input-bordered w-full" placeholder="~15 min" />
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Catégorie</span></label>
+            <input type="text" id="form-category" class="input input-bordered w-full" disabled />
+          </div>
+        </div>
+        <div>
+          <label class="label"><span class="label-text">URL du test</span></label>
+          <input type="text" id="form-url" class="input input-bordered w-full" placeholder="/test/bigfive" />
+        </div>
+        <div>
+          <label class="label"><span class="label-text">Configuration (JSON)</span></label>
+          <textarea id="form-config" class="textarea textarea-bordered w-full font-mono text-xs" rows="6" placeholder="{}"></textarea>
+          <label class="label"><span class="label-text-alt text-base-content/50">Critères d'évaluation, questions, etc.</span></label>
+        </div>
+        <div class="flex items-center gap-4">
+          <label class="label cursor-pointer gap-2">
+            <span class="label-text">Actif</span>
+            <input type="checkbox" id="form-active" class="toggle toggle-primary" checked />
+          </label>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn" id="btn-cancel">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <script>
+    import { createClient } from '@supabase/supabase-js';
+    const supabase = createClient(
+      import.meta.env.PUBLIC_SUPABASE_URL,
+      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const modal = document.getElementById('test-modal') as HTMLDialogElement;
+    let allTests: any[] = [];
+
+    async function loadTests() {
+      const { data: tests, error } = await supabase
+        .from('test_definitions')
+        .select('*')
+        .order('slug', { ascending: true });
+
+      document.getElementById('loading')!.classList.add('hidden');
+
+      if (error) {
+        document.getElementById('no-tests')!.classList.remove('hidden');
+        document.getElementById('no-tests')!.textContent = 'Erreur: ' + error.message;
+        return;
+      }
+
+      allTests = tests || [];
+
+      if (allTests.length === 0) {
+        document.getElementById('no-tests')!.classList.remove('hidden');
+        return;
+      }
+
+      const listDiv = document.getElementById('tests-list')!;
+      listDiv.classList.remove('hidden');
+
+      listDiv.innerHTML = allTests.map(t => {
+        const categoryBadge = t.category === 'system'
+          ? '<span class="badge badge-sm badge-ghost">Système</span>'
+          : '<span class="badge badge-sm badge-accent">Configurable</span>';
+        const activeBadge = t.is_active
+          ? '<span class="badge badge-sm badge-success">Actif</span>'
+          : '<span class="badge badge-sm badge-error">Inactif</span>';
+        const criteriaCount = t.config?.criteria?.length || 0;
+        const criteriaInfo = criteriaCount > 0 ? `<span class="text-xs text-base-content/50">${criteriaCount} critères</span>` : '';
+
+        return `
+          <div class="card bg-base-200">
+            <div class="card-body p-4 flex-row items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="font-semibold text-base-content">${t.label}</h3>
+                  ${categoryBadge}
+                  ${activeBadge}
+                </div>
+                <p class="text-sm text-base-content/60">${t.description || ''}</p>
+                <div class="flex items-center gap-3 mt-1">
+                  <span class="text-xs text-base-content/40">slug: ${t.slug}</span>
+                  <span class="text-xs text-base-content/40">${t.duration_label || ''}</span>
+                  ${criteriaInfo}
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm btn-edit" data-id="${t.id}">Modifier</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listDiv.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', () => openEdit(btn.getAttribute('data-id')!));
+      });
+    }
+
+    function openEdit(testId: string) {
+      const test = allTests.find(t => t.id === testId);
+      if (!test) return;
+
+      document.getElementById('modal-title')!.textContent = 'Modifier : ' + test.label;
+      (document.getElementById('form-id') as HTMLInputElement).value = test.id;
+      (document.getElementById('form-label') as HTMLInputElement).value = test.label;
+      (document.getElementById('form-slug') as HTMLInputElement).value = test.slug;
+      (document.getElementById('form-description') as HTMLTextAreaElement).value = test.description || '';
+      (document.getElementById('form-duration') as HTMLInputElement).value = test.duration_label || '';
+      (document.getElementById('form-category') as HTMLInputElement).value = test.category;
+      (document.getElementById('form-url') as HTMLInputElement).value = test.url_template || '';
+      (document.getElementById('form-config') as HTMLTextAreaElement).value = JSON.stringify(test.config || {}, null, 2);
+      (document.getElementById('form-active') as HTMLInputElement).checked = test.is_active;
+
+      modal.showModal();
+    }
+
+    document.getElementById('btn-cancel')!.addEventListener('click', () => modal.close());
+
+    document.getElementById('test-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = (document.getElementById('form-id') as HTMLInputElement).value;
+      let configJson: any = {};
+      try {
+        configJson = JSON.parse((document.getElementById('form-config') as HTMLTextAreaElement).value || '{}');
+      } catch {
+        alert('JSON de configuration invalide.');
+        return;
+      }
+
+      const payload = {
+        label: (document.getElementById('form-label') as HTMLInputElement).value,
+        description: (document.getElementById('form-description') as HTMLTextAreaElement).value,
+        duration_label: (document.getElementById('form-duration') as HTMLInputElement).value,
+        url_template: (document.getElementById('form-url') as HTMLInputElement).value,
+        config: configJson,
+        is_active: (document.getElementById('form-active') as HTMLInputElement).checked,
+      };
+
+      const { error } = await supabase
+        .from('test_definitions')
+        .update(payload)
+        .eq('id', id);
+
+      if (error) {
+        alert('Erreur: ' + error.message);
+      } else {
+        modal.close();
+        loadTests();
+      }
+    });
+
+    loadTests();
+  </script>
+</AdminLayout>

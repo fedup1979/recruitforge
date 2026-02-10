@@ -86,6 +86,68 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
   </dialog>
 
+  <!-- Test configuration modal -->
+  <dialog id="tests-modal" class="modal">
+    <div class="modal-box max-w-2xl">
+      <h3 class="font-bold text-lg">Configurer les tests</h3>
+      <p class="text-sm text-base-content/60 mt-1">Sélectionnez les tests, ajustez les poids et l'ordre pour ce poste.</p>
+      <input type="hidden" id="tests-job-id" />
+      <div id="tests-loading" class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-md text-primary"></span>
+      </div>
+      <div id="tests-config" class="hidden space-y-3 mt-4">
+        <!-- Populated by JS -->
+      </div>
+      <div class="text-sm text-base-content/50 mt-3" id="weight-total-display"></div>
+      <div class="modal-action">
+        <button type="button" class="btn" id="tests-cancel">Annuler</button>
+        <button type="button" class="btn btn-primary" id="tests-save">Enregistrer</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Personality profile modal -->
+  <dialog id="personality-modal" class="modal">
+    <div class="modal-box max-w-lg">
+      <h3 class="font-bold text-lg">Profil de personnalité idéal</h3>
+      <p class="text-sm text-base-content/60 mt-1">Définissez les plages Big Five souhaitées (0-100).</p>
+      <input type="hidden" id="pers-job-id" />
+      <div class="space-y-4 mt-4">
+        <div class="grid grid-cols-3 gap-2 items-center" data-dim="n">
+          <span class="font-medium text-sm">Névrosisme (N)</span>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Min</label><input type="number" class="input input-bordered input-sm w-20" id="pers-n-min" min="0" max="100" value="0" /></div>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Max</label><input type="number" class="input input-bordered input-sm w-20" id="pers-n-max" min="0" max="100" value="100" /></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center" data-dim="e">
+          <span class="font-medium text-sm">Extraversion (E)</span>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Min</label><input type="number" class="input input-bordered input-sm w-20" id="pers-e-min" min="0" max="100" value="0" /></div>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Max</label><input type="number" class="input input-bordered input-sm w-20" id="pers-e-max" min="0" max="100" value="100" /></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center" data-dim="o">
+          <span class="font-medium text-sm">Ouverture (O)</span>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Min</label><input type="number" class="input input-bordered input-sm w-20" id="pers-o-min" min="0" max="100" value="0" /></div>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Max</label><input type="number" class="input input-bordered input-sm w-20" id="pers-o-max" min="0" max="100" value="100" /></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center" data-dim="a">
+          <span class="font-medium text-sm">Agréabilité (A)</span>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Min</label><input type="number" class="input input-bordered input-sm w-20" id="pers-a-min" min="0" max="100" value="0" /></div>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Max</label><input type="number" class="input input-bordered input-sm w-20" id="pers-a-max" min="0" max="100" value="100" /></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center" data-dim="c">
+          <span class="font-medium text-sm">Conscienciosité (C)</span>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Min</label><input type="number" class="input input-bordered input-sm w-20" id="pers-c-min" min="0" max="100" value="0" /></div>
+          <div class="flex items-center gap-1"><label class="text-xs text-base-content/50">Max</label><input type="number" class="input input-bordered input-sm w-20" id="pers-c-max" min="0" max="100" value="100" /></div>
+        </div>
+      </div>
+      <div class="modal-action">
+        <button type="button" class="btn" id="pers-cancel">Annuler</button>
+        <button type="button" class="btn btn-primary" id="pers-save">Enregistrer</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
   <script>
     import { createClient } from '@supabase/supabase-js';
     const supabase = createClient(
@@ -94,8 +156,11 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     );
 
     const modal = document.getElementById('job-modal') as HTMLDialogElement;
+    const testsModal = document.getElementById('tests-modal') as HTMLDialogElement;
+    const persModal = document.getElementById('personality-modal') as HTMLDialogElement;
     const form = document.getElementById('job-form') as HTMLFormElement;
     let allJobs: any[] = [];
+    let allTestDefs: any[] = [];
 
     const statusColors: Record<string, string> = {
       draft: 'badge-ghost',
@@ -109,20 +174,21 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
     };
 
     async function loadJobs() {
-      const { data: jobs, error } = await supabase
-        .from('jobs')
-        .select('*, applications(count)')
-        .order('title', { ascending: true });
+      const [jobsRes, testDefsRes] = await Promise.all([
+        supabase.from('jobs').select('*, applications(count)').order('title', { ascending: true }),
+        supabase.from('test_definitions').select('id, slug, label, is_active').order('slug'),
+      ]);
 
       document.getElementById('loading')!.classList.add('hidden');
 
-      if (error) {
+      if (jobsRes.error) {
         document.getElementById('no-jobs')!.classList.remove('hidden');
-        document.getElementById('no-jobs')!.textContent = 'Erreur de chargement: ' + error.message;
+        document.getElementById('no-jobs')!.textContent = 'Erreur de chargement: ' + jobsRes.error.message;
         return;
       }
 
-      allJobs = jobs || [];
+      allJobs = jobsRes.data || [];
+      allTestDefs = testDefsRes.data || [];
 
       if (allJobs.length === 0) {
         document.getElementById('no-jobs')!.classList.remove('hidden');
@@ -148,14 +214,18 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
               <td>${j.salary_label || '—'}</td>
               <td><span class="badge badge-sm ${statusColors[j.status] || ''}">${statusLabels[j.status] || j.status}</span></td>
               <td>${appCount}</td>
-              <td class="flex gap-1">
-                <button class="btn btn-ghost btn-sm btn-edit" data-id="${j.id}">Modifier</button>
-                <button class="btn btn-ghost btn-sm btn-duplicate" data-id="${j.id}">Dupliquer</button>
-                <select class="select select-ghost select-xs btn-status-change" data-id="${j.id}">
-                  <option value="draft" ${j.status === 'draft' ? 'selected' : ''}>Brouillon</option>
-                  <option value="open" ${j.status === 'open' ? 'selected' : ''}>Ouvert</option>
-                  <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Fermé</option>
-                </select>
+              <td>
+                <div class="flex flex-wrap gap-1">
+                  <button class="btn btn-ghost btn-xs btn-edit" data-id="${j.id}">Modifier</button>
+                  <button class="btn btn-ghost btn-xs btn-duplicate" data-id="${j.id}">Dupliquer</button>
+                  <button class="btn btn-outline btn-xs btn-tests" data-id="${j.id}">Tests</button>
+                  <button class="btn btn-outline btn-xs btn-personality" data-id="${j.id}">Big Five</button>
+                  <select class="select select-ghost select-xs btn-status-change" data-id="${j.id}">
+                    <option value="draft" ${j.status === 'draft' ? 'selected' : ''}>Brouillon</option>
+                    <option value="open" ${j.status === 'open' ? 'selected' : ''}>Ouvert</option>
+                    <option value="closed" ${j.status === 'closed' ? 'selected' : ''}>Fermé</option>
+                  </select>
+                </div>
               </td>
             </tr>
           `;
@@ -194,6 +264,16 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         btn.addEventListener('click', () => openDuplicate(btn.getAttribute('data-id')!));
       });
 
+      // Test config buttons
+      jobsList.querySelectorAll('.btn-tests').forEach(btn => {
+        btn.addEventListener('click', () => openTestsConfig(btn.getAttribute('data-id')!));
+      });
+
+      // Personality profile buttons
+      jobsList.querySelectorAll('.btn-personality').forEach(btn => {
+        btn.addEventListener('click', () => openPersonalityProfile(btn.getAttribute('data-id')!));
+      });
+
       // Status change
       jobsList.querySelectorAll('.btn-status-change').forEach(sel => {
         sel.addEventListener('change', async (e) => {
@@ -205,6 +285,183 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       });
     }
 
+    // ============================================================
+    // Test configuration modal
+    // ============================================================
+    async function openTestsConfig(jobId: string) {
+      (document.getElementById('tests-job-id') as HTMLInputElement).value = jobId;
+      document.getElementById('tests-loading')!.classList.remove('hidden');
+      document.getElementById('tests-config')!.classList.add('hidden');
+      testsModal.showModal();
+
+      // Load existing job_tests for this job
+      const { data: existingTests } = await supabase
+        .from('job_tests')
+        .select('*, test_definitions(slug, label)')
+        .eq('job_id', jobId)
+        .order('sort_order', { ascending: true });
+
+      const existingMap = new Map((existingTests || []).map((jt: any) => [jt.test_definition_id, jt]));
+
+      const configDiv = document.getElementById('tests-config')!;
+      configDiv.innerHTML = allTestDefs.filter(td => td.is_active).map((td, idx) => {
+        const existing = existingMap.get(td.id);
+        const checked = existing ? true : false;
+        const weight = existing ? existing.weight : 0.2;
+        const order = existing ? existing.sort_order : idx + 1;
+        const threshold = existing?.threshold ?? '';
+        const reqStatus = existing?.requires_status ?? '';
+        const isRequired = existing ? existing.is_required : true;
+
+        return `
+          <div class="bg-base-100 rounded-box p-3" data-test-def-id="${td.id}">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" class="checkbox checkbox-sm test-enabled" data-id="${td.id}" ${checked ? 'checked' : ''} />
+              <div class="flex-1">
+                <span class="font-medium text-sm">${td.label}</span>
+                <span class="text-xs text-base-content/40 ml-2">${td.slug}</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 ml-8">
+              <div>
+                <label class="text-xs text-base-content/50">Ordre</label>
+                <input type="number" class="input input-bordered input-xs w-full test-order" data-id="${td.id}" value="${order}" min="1" />
+              </div>
+              <div>
+                <label class="text-xs text-base-content/50">Poids (0-1)</label>
+                <input type="number" class="input input-bordered input-xs w-full test-weight" data-id="${td.id}" value="${weight}" min="0" max="1" step="0.05" />
+              </div>
+              <div>
+                <label class="text-xs text-base-content/50">Seuil min</label>
+                <input type="number" class="input input-bordered input-xs w-full test-threshold" data-id="${td.id}" value="${threshold}" min="0" max="100" placeholder="—" />
+              </div>
+              <div>
+                <label class="text-xs text-base-content/50">Requiert statut</label>
+                <input type="text" class="input input-bordered input-xs w-full test-req-status" data-id="${td.id}" value="${reqStatus}" placeholder="—" />
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('tests-loading')!.classList.add('hidden');
+      configDiv.classList.remove('hidden');
+      updateWeightTotal();
+
+      // Update weight total on change
+      configDiv.querySelectorAll('.test-weight').forEach(input => {
+        input.addEventListener('input', updateWeightTotal);
+      });
+      configDiv.querySelectorAll('.test-enabled').forEach(cb => {
+        cb.addEventListener('change', updateWeightTotal);
+      });
+    }
+
+    function updateWeightTotal() {
+      const configDiv = document.getElementById('tests-config')!;
+      let total = 0;
+      configDiv.querySelectorAll('.test-enabled:checked').forEach(cb => {
+        const id = (cb as HTMLInputElement).dataset.id!;
+        const weightInput = configDiv.querySelector(`.test-weight[data-id="${id}"]`) as HTMLInputElement;
+        total += parseFloat(weightInput?.value || '0');
+      });
+      const display = document.getElementById('weight-total-display')!;
+      display.textContent = `Poids total (tests) : ${total.toFixed(2)} — Le profil candidat ajoute 0.25 automatiquement.`;
+      display.className = total > 0 ? 'text-sm text-base-content/50 mt-3' : 'text-sm text-warning mt-3';
+    }
+
+    document.getElementById('tests-cancel')!.addEventListener('click', () => testsModal.close());
+
+    document.getElementById('tests-save')!.addEventListener('click', async () => {
+      const jobId = (document.getElementById('tests-job-id') as HTMLInputElement).value;
+      const configDiv = document.getElementById('tests-config')!;
+
+      // First, delete all existing job_tests for this job
+      await supabase.from('job_tests').delete().eq('job_id', jobId);
+
+      // Then insert checked tests
+      const inserts: any[] = [];
+      configDiv.querySelectorAll('.test-enabled:checked').forEach(cb => {
+        const id = (cb as HTMLInputElement).dataset.id!;
+        const order = parseInt((configDiv.querySelector(`.test-order[data-id="${id}"]`) as HTMLInputElement).value) || 0;
+        const weight = parseFloat((configDiv.querySelector(`.test-weight[data-id="${id}"]`) as HTMLInputElement).value) || 0.2;
+        const thresholdVal = (configDiv.querySelector(`.test-threshold[data-id="${id}"]`) as HTMLInputElement).value;
+        const threshold = thresholdVal ? parseFloat(thresholdVal) : null;
+        const reqStatus = (configDiv.querySelector(`.test-req-status[data-id="${id}"]`) as HTMLInputElement).value || null;
+
+        inserts.push({
+          job_id: jobId,
+          test_definition_id: id,
+          sort_order: order,
+          weight,
+          threshold,
+          is_required: true,
+          requires_status: reqStatus,
+        });
+      });
+
+      if (inserts.length > 0) {
+        const { error } = await supabase.from('job_tests').insert(inserts);
+        if (error) {
+          alert('Erreur: ' + error.message);
+          return;
+        }
+      }
+
+      testsModal.close();
+      alert('Configuration des tests enregistrée.');
+    });
+
+    // ============================================================
+    // Personality profile modal
+    // ============================================================
+    async function openPersonalityProfile(jobId: string) {
+      (document.getElementById('pers-job-id') as HTMLInputElement).value = jobId;
+
+      // Load existing profile
+      const { data: existing } = await supabase
+        .from('job_personality_profiles')
+        .select('*')
+        .eq('job_id', jobId)
+        .single();
+
+      const dims = ['n', 'e', 'o', 'a', 'c'];
+      dims.forEach(d => {
+        (document.getElementById(`pers-${d}-min`) as HTMLInputElement).value = String(existing?.[`${d}_min`] ?? 0);
+        (document.getElementById(`pers-${d}-max`) as HTMLInputElement).value = String(existing?.[`${d}_max`] ?? 100);
+      });
+
+      persModal.showModal();
+    }
+
+    document.getElementById('pers-cancel')!.addEventListener('click', () => persModal.close());
+
+    document.getElementById('pers-save')!.addEventListener('click', async () => {
+      const jobId = (document.getElementById('pers-job-id') as HTMLInputElement).value;
+      const dims = ['n', 'e', 'o', 'a', 'c'];
+      const payload: any = { job_id: jobId };
+
+      for (const d of dims) {
+        payload[`${d}_min`] = parseInt((document.getElementById(`pers-${d}-min`) as HTMLInputElement).value) || 0;
+        payload[`${d}_max`] = parseInt((document.getElementById(`pers-${d}-max`) as HTMLInputElement).value) || 100;
+      }
+
+      const { error } = await supabase
+        .from('job_personality_profiles')
+        .upsert(payload, { onConflict: 'job_id' });
+
+      if (error) {
+        alert('Erreur: ' + error.message);
+        return;
+      }
+
+      persModal.close();
+      alert('Profil de personnalité enregistré.');
+    });
+
+    // ============================================================
+    // Job CRUD (unchanged logic)
+    // ============================================================
     function resetForm() {
       (document.getElementById('form-id') as HTMLInputElement).value = '';
       (document.getElementById('form-title') as HTMLInputElement).value = '';

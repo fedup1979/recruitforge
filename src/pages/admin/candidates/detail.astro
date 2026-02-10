@@ -85,6 +85,12 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           <div class="mt-3" id="cv-container">
             <!-- CV link if available -->
           </div>
+          <!-- Parsed CV data -->
+          <div id="parsed-cv" class="hidden mt-3">
+            <div class="divider my-1"></div>
+            <p class="text-xs text-base-content/50 mb-2">Données extraites du CV (IA)</p>
+            <div id="parsed-cv-content" class="space-y-2 text-sm"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -110,6 +116,21 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- Video presentation -->
+    <div class="card bg-base-200 mb-6" id="video-section">
+      <div class="card-body">
+        <h2 class="card-title text-base">Présentation vidéo</h2>
+        <div id="video-player-container" class="hidden">
+          <!-- Video player inserted by JS -->
+        </div>
+        <div id="video-transcript" class="hidden mt-3">
+          <p class="text-xs text-base-content/50 mb-1">Transcription</p>
+          <div class="bg-base-100 rounded-box p-3 text-sm max-h-48 overflow-y-auto whitespace-pre-wrap" id="video-transcript-text"></div>
+        </div>
+        <div id="no-video" class="text-base-content/50 text-sm">Aucune vidéo de présentation.</div>
+      </div>
+    </div>
+
     <!-- Roleplay recordings -->
     <div class="card bg-base-200 mb-6" id="roleplay-section">
       <div class="card-body">
@@ -121,111 +142,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       </div>
     </div>
 
-    <!-- Human scoring -->
-    <div class="card bg-base-200 mb-6" id="scoring-section">
-      <div class="card-body">
-        <h2 class="card-title text-base">Grille d'évaluation Roleplay</h2>
-        <div class="flex items-center justify-between mb-3">
-          <p class="text-xs text-base-content/50">Score chaque critère de 1 (faible) à 5 (excellent). Minimum pour avancer : 18/30.</p>
-          <button id="reset-all-scores" class="btn btn-ghost btn-xs text-error">Tout réinitialiser</button>
-        </div>
-        <div class="space-y-3" id="scoring-grid">
-          <div class="flex items-center justify-between gap-4" data-criterion="ouverture">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Ouverture</span><p class="text-xs text-base-content/40">Naturelle, chaleureuse</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-ouverture">
-                <input type="radio" name="ouverture" class="rating-hidden" value="0" checked />
-                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="ouverture" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="ouverture" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-4" data-criterion="qualification">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Qualification</span><p class="text-xs text-base-content/40">Questions pertinentes, écoute</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-qualification">
-                <input type="radio" name="qualification" class="rating-hidden" value="0" checked />
-                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="qualification" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="qualification" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-4" data-criterion="objections">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Gestion objections</span><p class="text-xs text-base-content/40">Répond avec assurance, rebondit</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-objections">
-                <input type="radio" name="objections" class="rating-hidden" value="0" checked />
-                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="objections" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="objections" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-4" data-criterion="closing">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Closing</span><p class="text-xs text-base-content/40">Demande claire, assume</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-closing">
-                <input type="radio" name="closing" class="rating-hidden" value="0" checked />
-                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="closing" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="closing" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-4" data-criterion="ton">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Ton général</span><p class="text-xs text-base-content/40">Chaleureux, souriant</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-ton">
-                <input type="radio" name="ton" class="rating-hidden" value="0" checked />
-                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="ton" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="ton" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-4" data-criterion="ecoute">
-            <div class="min-w-[140px]"><span class="font-medium text-sm">Écoute</span><p class="text-xs text-base-content/40">Reformule, adapte</p></div>
-            <div class="flex items-center gap-2">
-              <div class="rating rating-md" id="rating-ecoute">
-                <input type="radio" name="ecoute" class="rating-hidden" value="0" checked />
-                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="1" />
-                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="2" />
-                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="3" />
-                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="4" />
-                <input type="radio" name="ecoute" class="mask mask-star-2 bg-primary" value="5" />
-              </div>
-              <button class="btn btn-ghost btn-xs reset-rating" data-name="ecoute" title="Remettre à 0">&#x2715;</button>
-            </div>
-          </div>
-        </div>
-        <div class="divider my-2"></div>
-        <div class="flex items-center justify-between">
-          <div>
-            <span class="text-sm font-bold">Total : </span>
-            <span id="score-total" class="text-lg font-bold text-primary">0</span>
-            <span class="text-sm text-base-content/50">/30</span>
-            <span id="score-verdict" class="badge badge-sm ml-2"></span>
-          </div>
-          <button id="save-score" class="btn btn-primary btn-sm">Enregistrer le score</button>
-        </div>
-      </div>
+    <!-- Dynamic evaluation grids -->
+    <div id="evaluation-grids" class="space-y-6 mb-6">
+      <!-- Populated by JS -->
     </div>
 
     <!-- Notes -->
@@ -270,7 +189,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       const { data: app, error } = await supabase
         .from('applications')
         .select(`
-          id, status, created_at, knockout_answers, admin_notes,
+          id, status, created_at, knockout_answers, admin_notes, job_id,
           profiles(id, full_name, email, phone, country, role, created_at),
           jobs(id, title, country, salary_label),
           test_results(test_type, score, result_data, completed_at)
@@ -325,8 +244,62 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             .createSignedUrl(`${profile.id}/cv/${files[0].name}`, 3600);
 
           if (urlData?.signedUrl) {
-            cvContainer.innerHTML = `<a href="${urlData.signedUrl}" target="_blank" class="btn btn-outline btn-sm">📄 Télécharger le CV</a>`;
+            cvContainer.innerHTML = `<a href="${urlData.signedUrl}" target="_blank" class="btn btn-outline btn-sm">Télécharger le CV</a>`;
           }
+        }
+      }
+
+      // Load parsed CV data from candidate_documents
+      if (profile?.id) {
+        const { data: cvDocs } = await supabase
+          .from('candidate_documents')
+          .select('metadata')
+          .eq('user_id', profile.id)
+          .eq('doc_type', 'cv')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (cvDocs?.[0]?.metadata?.parsed) {
+          const parsed = cvDocs[0].metadata.parsed as any;
+          const parsedDiv = document.getElementById('parsed-cv')!;
+          const contentDiv = document.getElementById('parsed-cv-content')!;
+          parsedDiv.classList.remove('hidden');
+
+          let html = '';
+
+          if (parsed.summary) {
+            html += `<p class="text-base-content/70 italic">${parsed.summary}</p>`;
+          }
+
+          if (parsed.skills?.length > 0) {
+            html += `<div><span class="text-xs text-base-content/50">Compétences</span><div class="flex flex-wrap gap-1 mt-1">${
+              parsed.skills.map((s: string) => `<span class="badge badge-sm badge-outline">${s}</span>`).join('')
+            }</div></div>`;
+          }
+
+          if (parsed.experience?.length > 0) {
+            html += `<div><span class="text-xs text-base-content/50">Expérience</span><div class="space-y-1 mt-1">${
+              parsed.experience.map((e: any) =>
+                `<div class="bg-base-100 rounded px-2 py-1"><span class="font-medium text-xs">${e.title}</span> <span class="text-xs text-base-content/50">— ${e.company} (${e.dates})</span></div>`
+              ).join('')
+            }</div></div>`;
+          }
+
+          if (parsed.education?.length > 0) {
+            html += `<div><span class="text-xs text-base-content/50">Formation</span><div class="space-y-1 mt-1">${
+              parsed.education.map((e: any) =>
+                `<div class="bg-base-100 rounded px-2 py-1"><span class="font-medium text-xs">${e.degree}</span> <span class="text-xs text-base-content/50">— ${e.school} (${e.dates})</span></div>`
+              ).join('')
+            }</div></div>`;
+          }
+
+          if (parsed.languages?.length > 0) {
+            html += `<div><span class="text-xs text-base-content/50">Langues</span><div class="flex flex-wrap gap-1 mt-1">${
+              parsed.languages.map((l: string) => `<span class="badge badge-sm badge-ghost">${l}</span>`).join('')
+            }</div></div>`;
+          }
+
+          contentDiv.innerHTML = html;
         }
       }
 
@@ -336,7 +309,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         const answers = app.knockout_answers as Record<string, any>;
         const questionLabels: Record<string, string> = {
           availability: 'Disponibilité Lun-Ven 9h-18h',
-          internet: 'Connexion internet stable (≥10 Mbps)',
+          internet: 'Connexion internet stable',
           french_level: 'Niveau de français',
           call_experience: 'Expérience en appels',
         };
@@ -360,6 +333,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
             big_five: 'Big Five', quiz: 'Quiz produit', human_score: 'Score humain',
             composite: 'Score composite', intelligence: 'Test d\'intelligence',
             roleplay: 'Roleplay', roleplay_easy: 'Roleplay (facile)', roleplay_medium: 'Roleplay (moyen)',
+            video_presentation: 'Présentation vidéo',
           };
           const typeLabel = typeLabels[t.test_type] || t.test_type;
           const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
@@ -367,7 +341,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
           if (t.test_type === 'big_five' && t.result_data) {
             const rd = t.result_data as any;
-            // IPIP-NEO-120 format (has .domains)
             if (rd.domains) {
               const domainLabels: Record<string, string> = {
                 N: 'Névrosisme', E: 'Extraversion', O: 'Ouverture', A: 'Agréabilité', C: 'Conscienciosité',
@@ -387,7 +360,6 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                 ).join('')
               }</div>`;
             } else {
-              // Legacy TIPI-10 format (simple trait map)
               const traits = rd as Record<string, number>;
               details = `<div class="grid grid-cols-5 gap-2 mt-2">${
                 Object.entries(traits).map(([trait, score]) =>
@@ -417,6 +389,32 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         }).join('');
       }
 
+      // Video presentation display
+      const videoTest = testResults.find((t: any) => t.test_type === 'video_presentation');
+      if (videoTest?.result_data?.storage_path) {
+        const { data: videoUrl } = await supabase.storage
+          .from('candidates')
+          .createSignedUrl(videoTest.result_data.storage_path, 3600);
+        if (videoUrl?.signedUrl) {
+          document.getElementById('no-video')!.classList.add('hidden');
+          const container = document.getElementById('video-player-container')!;
+          container.classList.remove('hidden');
+          const mimeType = videoTest.result_data.mime_type || 'video/webm';
+          container.innerHTML = `
+            <video controls class="w-full rounded-lg" preload="metadata">
+              <source src="${videoUrl.signedUrl}" type="${mimeType}" />
+              Votre navigateur ne supporte pas la lecture vidéo.
+            </video>
+            <p class="text-xs text-base-content/50 mt-2">Enregistrée le ${videoTest.completed_at ? new Date(videoTest.completed_at).toLocaleDateString('fr-FR') : '—'}</p>
+          `;
+        }
+        // Show transcript if available
+        if (videoTest.result_data.transcript) {
+          document.getElementById('video-transcript')!.classList.remove('hidden');
+          document.getElementById('video-transcript-text')!.textContent = videoTest.result_data.transcript;
+        }
+      }
+
       // Roleplay recordings
       const roleplayTests = testResults.filter((t: any) => t.test_type?.startsWith('roleplay_'));
       const recordingsDiv = document.getElementById('roleplay-recordings')!;
@@ -425,7 +423,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
       if (roleplayTests.length === 0) {
         noRecordings.classList.remove('hidden');
       } else {
-        recordingsDiv.innerHTML = roleplayTests.map((t: any, idx: number) => {
+        recordingsDiv.innerHTML = roleplayTests.map((t: any) => {
           const data = t.result_data || {};
           const scenarioName = data.scenario_name || t.test_type;
           const date = t.completed_at ? new Date(t.completed_at).toLocaleDateString('fr-FR') : '—';
@@ -476,9 +474,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
         document.getElementById('composite-score')!.textContent = String(compositeTest.score);
         const breakdown = compositeTest.result_data as any;
         if (breakdown) {
-          const parts = [`Big Five: ${breakdown.big_five}%`];
+          const parts = [`Big Five: ${breakdown.big_five ?? '—'}%`];
           if (breakdown.intelligence != null) parts.push(`Intelligence: ${breakdown.intelligence}%`);
-          parts.push(`Quiz: ${breakdown.quiz}%`, `Profil: ${breakdown.profile}%`);
+          parts.push(`Quiz: ${breakdown.quiz ?? '—'}%`, `Profil: ${breakdown.profile ?? '—'}%`);
           document.getElementById('composite-breakdown')!.textContent = parts.join(' | ');
         }
         const verdict = document.getElementById('composite-verdict')!;
@@ -493,6 +491,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           verdict.className = 'badge badge-error ml-2';
         }
       }
+
+      // Dynamic evaluation grids — load from test_definitions with criteria
+      await loadEvaluationGrids(app.job_id, testResults);
 
       // Notes
       const notesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
@@ -547,7 +548,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
                   }),
                 }
               );
-            } catch {} // Don't block UI if email fails
+            } catch {}
           }
 
           alert('Statut mis à jour.' + (emailTemplate ? ' Email envoyé au candidat.' : ''));
@@ -568,100 +569,227 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
           alert('Notes enregistrées.');
         }
       });
+    }
 
-      // Load existing human score
-      const existingHumanScore = testResults.find((t: any) => t.test_type === 'human_score');
-      if (existingHumanScore?.result_data) {
-        const scores = existingHumanScore.result_data as Record<string, number>;
-        const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
-        criteria.forEach(c => {
-          if (scores[c]) {
-            const radio = document.querySelector(`input[name="${c}"][value="${scores[c]}"]`) as HTMLInputElement;
-            if (radio) radio.checked = true;
+    // ============================================================
+    // Dynamic evaluation grids
+    // ============================================================
+    async function loadEvaluationGrids(jobId: string, testResults: any[]) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Load test definitions that have criteria in their config
+      const { data: testDefs } = await supabase
+        .from('test_definitions')
+        .select('id, slug, label, config')
+        .filter('config', 'neq', '{}');
+
+      if (!testDefs) return;
+
+      const evaluableTests = testDefs.filter(td => td.config?.criteria?.length > 0);
+      if (evaluableTests.length === 0) return;
+
+      // Load existing evaluations for this application
+      const { data: existingEvals } = await supabase
+        .from('evaluations')
+        .select('*')
+        .eq('application_id', appId);
+
+      // Also load legacy human_score from test_results (backward compatibility)
+      const legacyHumanScore = testResults.find(t => t.test_type === 'human_score');
+
+      const gridsContainer = document.getElementById('evaluation-grids')!;
+
+      for (const testDef of evaluableTests) {
+        const criteria: Array<{ key: string; label: string; description: string }> = testDef.config.criteria;
+        const myEval = (existingEvals || []).find(
+          (e: any) => e.test_definition_id === testDef.id && e.evaluator_id === session.user.id
+        );
+        const allEvals = (existingEvals || []).filter(
+          (e: any) => e.test_definition_id === testDef.id
+        );
+
+        // For roleplay, check if we have a legacy human_score to pre-populate
+        let preScores: Record<string, number> = {};
+        if (myEval?.scores) {
+          preScores = myEval.scores;
+        } else if (testDef.slug === 'roleplay' && legacyHumanScore?.result_data) {
+          preScores = legacyHumanScore.result_data;
+        }
+
+        const gridId = `eval-grid-${testDef.slug}`;
+        const maxScore = criteria.length * 5;
+
+        const gridHtml = `
+          <div class="card bg-base-200" id="${gridId}">
+            <div class="card-body">
+              <h2 class="card-title text-base">Grille d'évaluation — ${testDef.label}</h2>
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-xs text-base-content/50">Score chaque critère de 1 (faible) à 5 (excellent).</p>
+                <button class="btn btn-ghost btn-xs text-error eval-reset-all" data-grid="${gridId}">Tout réinitialiser</button>
+              </div>
+              ${allEvals.length > 1 ? `
+                <div class="alert alert-info mb-3 py-2">
+                  <span class="text-xs">${allEvals.length} évaluateurs ont noté ce test.</span>
+                </div>
+              ` : ''}
+              <div class="space-y-3 eval-criteria" data-grid="${gridId}">
+                ${criteria.map(c => `
+                  <div class="flex items-center justify-between gap-4" data-criterion="${c.key}">
+                    <div class="min-w-[140px]">
+                      <span class="font-medium text-sm">${c.label}</span>
+                      <p class="text-xs text-base-content/40">${c.description}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="rating rating-md" id="rating-${testDef.slug}-${c.key}">
+                        <input type="radio" name="${testDef.slug}-${c.key}" class="rating-hidden" value="0" ${!preScores[c.key] ? 'checked' : ''} />
+                        ${[1,2,3,4,5].map(v => `
+                          <input type="radio" name="${testDef.slug}-${c.key}" class="mask mask-star-2 bg-primary" value="${v}" ${preScores[c.key] === v ? 'checked' : ''} />
+                        `).join('')}
+                      </div>
+                      <button class="btn btn-ghost btn-xs eval-reset" data-name="${testDef.slug}-${c.key}" title="Remettre à 0">&#x2715;</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="divider my-2"></div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-sm font-bold">Total : </span>
+                  <span class="text-lg font-bold text-primary eval-total" data-grid="${gridId}">0</span>
+                  <span class="text-sm text-base-content/50">/${maxScore}</span>
+                  <span class="badge badge-sm ml-2 eval-verdict" data-grid="${gridId}"></span>
+                </div>
+                <button class="btn btn-primary btn-sm eval-save" data-test-def-id="${testDef.id}" data-grid="${gridId}" data-max="${maxScore}" data-slug="${testDef.slug}">Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        gridsContainer.insertAdjacentHTML('beforeend', gridHtml);
+      }
+
+      // Wire up event listeners for all grids
+      gridsContainer.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('change', () => {
+          const gridId = input.closest('.eval-criteria')?.getAttribute('data-grid');
+          if (gridId) updateEvalTotal(gridId);
+        });
+      });
+
+      gridsContainer.querySelectorAll('.eval-reset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const name = (btn as HTMLButtonElement).dataset.name!;
+          const hidden = document.querySelector(`input[name="${name}"].rating-hidden`) as HTMLInputElement;
+          if (hidden) hidden.checked = true;
+          const gridId = btn.closest('.eval-criteria')?.getAttribute('data-grid');
+          if (gridId) updateEvalTotal(gridId);
+        });
+      });
+
+      gridsContainer.querySelectorAll('.eval-reset-all').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const gridId = (btn as HTMLButtonElement).dataset.grid!;
+          const grid = document.getElementById(gridId)!;
+          grid.querySelectorAll('.rating-hidden').forEach(h => {
+            (h as HTMLInputElement).checked = true;
+          });
+          updateEvalTotal(gridId);
+        });
+      });
+
+      gridsContainer.querySelectorAll('.eval-save').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const gridId = (btn as HTMLButtonElement).dataset.grid!;
+          const testDefId = (btn as HTMLButtonElement).dataset.testDefId!;
+          const maxScore = parseInt((btn as HTMLButtonElement).dataset.max!);
+          const slug = (btn as HTMLButtonElement).dataset.slug!;
+
+          const grid = document.getElementById(gridId)!;
+          const scores: Record<string, number> = {};
+
+          grid.querySelectorAll('[data-criterion]').forEach(row => {
+            const key = row.getAttribute('data-criterion')!;
+            const checked = row.querySelector(`input[name="${slug}-${key}"]:checked`) as HTMLInputElement;
+            scores[key] = checked ? parseInt(checked.value) : 0;
+          });
+
+          const total = Object.values(scores).reduce((a, b) => a + b, 0);
+          const pct = Math.round((total / maxScore) * 100);
+
+          const { data: { session: evalSession } } = await supabase.auth.getSession();
+          if (!evalSession) return;
+
+          const { error: evalError } = await supabase
+            .from('evaluations')
+            .upsert({
+              application_id: appId,
+              test_definition_id: testDefId,
+              evaluator_id: evalSession.user.id,
+              scores,
+              total_score: total,
+              max_score: maxScore,
+            }, { onConflict: 'application_id,test_definition_id,evaluator_id' });
+
+          if (evalError) {
+            alert('Erreur: ' + evalError.message);
+          } else {
+            // Also save backward-compatible human_score for roleplay
+            if (slug === 'roleplay') {
+              await supabase.from('test_results').upsert({
+                application_id: appId,
+                test_type: 'human_score',
+                score: pct,
+                result_data: scores,
+                completed_at: new Date().toISOString(),
+              }, { onConflict: 'application_id,test_type' });
+            }
+            alert(`Score enregistré : ${total}/${maxScore} (${pct}%)`);
           }
         });
-        updateScoreTotal();
-      }
+      });
+
+      // Initialize totals
+      evaluableTests.forEach(td => {
+        updateEvalTotal(`eval-grid-${td.slug}`);
+      });
     }
 
-    // Score calculation
-    function getScoreValues(): Record<string, number> {
-      const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
-      const scores: Record<string, number> = {};
-      criteria.forEach(c => {
-        const checked = document.querySelector(`input[name="${c}"]:checked`) as HTMLInputElement;
-        scores[c] = checked ? parseInt(checked.value) : 0;
-      });
-      return scores;
-    }
+    function updateEvalTotal(gridId: string) {
+      const grid = document.getElementById(gridId);
+      if (!grid) return;
 
-    function updateScoreTotal() {
-      const scores = getScoreValues();
-      const total = Object.values(scores).reduce((a, b) => a + b, 0);
-      document.getElementById('score-total')!.textContent = String(total);
-      const verdict = document.getElementById('score-verdict')!;
-      if (total >= 25) {
-        verdict.textContent = 'Excellent';
-        verdict.className = 'badge badge-sm badge-success ml-2';
-      } else if (total >= 18) {
-        verdict.textContent = 'Acceptable';
-        verdict.className = 'badge badge-sm badge-info ml-2';
-      } else if (total > 0) {
-        verdict.textContent = 'Insuffisant';
-        verdict.className = 'badge badge-sm badge-error ml-2';
-      } else {
-        verdict.textContent = '';
-        verdict.className = 'badge badge-sm ml-2';
+      let total = 0;
+      grid.querySelectorAll('[data-criterion]').forEach(row => {
+        const checked = row.querySelector('input[type="radio"]:checked') as HTMLInputElement;
+        total += checked ? parseInt(checked.value) : 0;
+      });
+
+      const totalEl = grid.querySelector(`.eval-total[data-grid="${gridId}"]`);
+      if (totalEl) totalEl.textContent = String(total);
+
+      const maxStr = grid.querySelector('.eval-save')?.getAttribute('data-max') || '30';
+      const maxScore = parseInt(maxStr);
+      const pct = maxScore > 0 ? Math.round((total / maxScore) * 100) : 0;
+
+      const verdict = grid.querySelector(`.eval-verdict[data-grid="${gridId}"]`);
+      if (verdict) {
+        if (pct >= 83) {
+          verdict.textContent = 'Excellent';
+          verdict.className = 'badge badge-sm badge-success ml-2 eval-verdict';
+        } else if (pct >= 60) {
+          verdict.textContent = 'Acceptable';
+          verdict.className = 'badge badge-sm badge-info ml-2 eval-verdict';
+        } else if (total > 0) {
+          verdict.textContent = 'Insuffisant';
+          verdict.className = 'badge badge-sm badge-error ml-2 eval-verdict';
+        } else {
+          verdict.textContent = '';
+          verdict.className = 'badge badge-sm ml-2 eval-verdict';
+        }
+        (verdict as HTMLElement).setAttribute('data-grid', gridId);
       }
     }
-
-    // Listen for rating changes
-    document.querySelectorAll('#scoring-grid input[type="radio"]').forEach(input => {
-      input.addEventListener('change', updateScoreTotal);
-    });
-
-    // Reset individual rating
-    document.querySelectorAll('.reset-rating').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const name = (btn as HTMLButtonElement).dataset.name!;
-        const hidden = document.querySelector(`input[name="${name}"].rating-hidden`) as HTMLInputElement;
-        if (hidden) { hidden.checked = true; }
-        updateScoreTotal();
-      });
-    });
-
-    // Reset all ratings
-    document.getElementById('reset-all-scores')?.addEventListener('click', () => {
-      const criteria = ['ouverture', 'qualification', 'objections', 'closing', 'ton', 'ecoute'];
-      criteria.forEach(c => {
-        const hidden = document.querySelector(`input[name="${c}"].rating-hidden`) as HTMLInputElement;
-        if (hidden) hidden.checked = true;
-      });
-      updateScoreTotal();
-    });
-
-    // Save score
-    document.getElementById('save-score')!.addEventListener('click', async () => {
-      const scores = getScoreValues();
-      const total = Object.values(scores).reduce((a, b) => a + b, 0);
-      const pct = Math.round((total / 30) * 100);
-
-      const { error: scoreError } = await supabase
-        .from('test_results')
-        .upsert({
-          application_id: appId,
-          test_type: 'human_score',
-          score: pct,
-          result_data: scores,
-          completed_at: new Date().toISOString(),
-        }, { onConflict: 'application_id,test_type' });
-
-      if (scoreError) {
-        alert('Erreur: ' + scoreError.message);
-      } else {
-        alert(`Score enregistré : ${total}/30 (${pct}%)`);
-      }
-    });
 
     loadDetail();
   </script>
