@@ -70,36 +70,57 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
         <!-- In-call UI -->
         <div id="call-section" class="hidden">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="card bg-base-200">
+            <div class="card-body items-center text-center">
+              <!-- Call status indicator -->
+              <div id="call-avatar" class="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </div>
-              <div>
-                <p class="font-semibold text-base-content" id="call-status">Connexion en cours...</p>
-                <p class="text-lg font-mono text-primary" id="call-timer">00:00</p>
-              </div>
-            </div>
-            <button id="btn-end-call" class="btn btn-error btn-sm">Raccrocher</button>
-          </div>
 
-          <!-- Embedded call frame -->
-          <div class="rounded-box overflow-hidden border border-base-300" style="height: 500px;">
-            <iframe id="call-frame" class="w-full h-full" allow="microphone; camera" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+              <p class="font-semibold text-lg text-base-content" id="call-status">Connexion en cours...</p>
+              <p class="text-3xl font-mono text-primary my-4" id="call-timer">00:00</p>
+
+              <!-- Speaking indicator -->
+              <div id="speaking-indicator" class="hidden flex items-center gap-2 text-sm text-success mb-4">
+                <span class="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+                <span>L'IA parle...</span>
+              </div>
+
+              <!-- Microphone permission hint -->
+              <p id="mic-hint" class="text-xs text-base-content/40 mb-4">Autorisez l'accès au microphone quand demandé.</p>
+
+              <button id="btn-end-call" class="btn btn-error gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L8.228 3.684A1 1 0 007.28 3H5z" />
+                </svg>
+                Raccrocher
+              </button>
+            </div>
           </div>
-          <p class="text-xs text-base-content/40 mt-2 text-center">Autorisez l'accès au microphone quand demandé.</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="error-section" class="hidden">
+          <div class="alert alert-error mb-4">
+            <span id="error-text">Une erreur est survenue.</span>
+          </div>
+          <div class="flex gap-2 justify-center">
+            <button id="btn-retry" class="btn btn-primary btn-sm">Réessayer</button>
+            <a href="/dashboard" class="btn btn-ghost btn-sm">Retour au tableau de bord</a>
+          </div>
         </div>
 
         <!-- Completed -->
         <div id="completed-section" class="hidden text-center py-8">
           <div class="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h2 class="text-2xl font-bold text-base-content mb-2">Roleplay terminé !</h2>
+          <p class="text-base-content/60 mb-2">Durée de l'appel : <span id="final-duration" class="font-mono font-bold">00:00</span></p>
           <p class="text-base-content/60 mb-6">Votre enregistrement a été sauvegardé. Un recruteur écoutera votre appel et évaluera votre performance.</p>
           <a href="/dashboard" class="btn btn-primary">Retour au tableau de bord</a>
         </div>
@@ -109,10 +130,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   <script>
     import { createClient } from '@supabase/supabase-js';
+    import Vapi from '@vapi-ai/web';
+
     const supabase = createClient(
       import.meta.env.PUBLIC_SUPABASE_URL,
       import.meta.env.PUBLIC_SUPABASE_ANON_KEY
     );
+
+    const vapiPublicKey = import.meta.env.PUBLIC_VAPI_PUBLIC_KEY;
 
     const params = new URLSearchParams(window.location.search);
     const applicationId = params.get('app');
@@ -120,6 +145,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     let callStartTime: number | null = null;
     let timerInterval: number | null = null;
+    let vapiInstance: Vapi | null = null;
 
     const scenarioInfo: Record<string, { title: string; description: string }> = {
       easy: {
@@ -128,7 +154,50 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       },
       medium: {
         title: 'Scénario 2 : Marie — Prospect hésitante',
-        description: 'Marie, 38 ans, secrétaire. Elle a cliqué sur votre publicité par curiosité mais hésite. Elle va vous poser des objections : prix, besoin de réfléchir, demande d\'infos par email.',
+        description: 'Marie, 38 ans, secrétaire. Elle a cliqué sur votre publicité par curiosité pour une formation professionnelle en ligne, mais elle hésite. Elle va vous poser des objections : prix, besoin de réfléchir, demande d\'infos par email.',
+      },
+    };
+
+    // System prompts (server-side equivalent — the prospect behavior)
+    const scenarioPrompts: Record<string, { systemPrompt: string; firstName: string; firstMessage: string }> = {
+      easy: {
+        firstName: 'Sophie',
+        firstMessage: 'Allô ?',
+        systemPrompt: `Tu es Sophie, 32 ans, vendeuse dans un magasin de vêtements à Paris. Tu as vu une publicité Facebook pour une formation professionnelle en ligne et tu as demandé des informations.
+
+Tu es MOTIVÉE et INTÉRESSÉE. Tu veux changer de carrière.
+
+Ton comportement :
+- Tu réponds aux questions avec enthousiasme
+- Tu poses des questions sur la formation (durée, prix, débouchés)
+- Tu es disponible pour un rendez-vous
+- Tu dis "oui" facilement quand on te propose un rendez-vous avec un conseiller
+
+Si le setter te propose un rendez-vous, accepte après 1-2 questions.
+
+IMPORTANT : Tu parles UNIQUEMENT en français. Tu es polie et chaleureuse. Garde tes réponses courtes (1-3 phrases).`,
+      },
+      medium: {
+        firstName: 'Marie',
+        firstMessage: 'Oui allô ?',
+        systemPrompt: `Tu es Marie, 38 ans, secrétaire dans un cabinet d'avocats. Tu as cliqué sur une pub Facebook par curiosité pour une formation professionnelle en ligne, mais tu n'es PAS CONVAINCUE.
+
+Tu es HÉSITANTE et SCEPTIQUE.
+
+Ton comportement :
+- Tu utilises ces objections (dans cet ordre, une par échange) :
+  1. "Je ne sais pas, je réfléchis encore..."
+  2. "C'est combien ? Ça doit être cher non ?"
+  3. "Vous pouvez m'envoyer les infos par email plutôt ?"
+  4. Si le setter gère bien les objections, accepte finalement le RDV
+- Tu ne dis jamais "oui" tout de suite
+- Tu es polie mais pas enthousiaste
+- Tu poses des questions sur le prix et les modalités
+
+Si le setter gère BIEN tes objections (réponses pertinentes, empathique), accepte le RDV.
+Si le setter est MAUVAIS (robotique, agressif, ne répond pas), refuse et dis que tu rappelleras.
+
+IMPORTANT : Tu parles UNIQUEMENT en français. Garde tes réponses courtes (1-3 phrases).`,
       },
     };
 
@@ -181,6 +250,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       document.getElementById('scenario-description')!.textContent = info.description;
     }
 
+    function showError(msg: string) {
+      document.getElementById('instructions-section')!.classList.add('hidden');
+      document.getElementById('call-section')!.classList.add('hidden');
+      document.getElementById('error-text')!.textContent = msg;
+      document.getElementById('error-section')!.classList.remove('hidden');
+    }
+
+    function formatTimer(seconds: number): string {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
     // Start call
     document.getElementById('btn-start')!.addEventListener('click', async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -190,76 +272,108 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       document.getElementById('call-section')!.classList.remove('hidden');
 
       try {
-        const response = await fetch(
-          `${import.meta.env.PUBLIC_SUPABASE_URL}/functions/v1/create-vapi-call`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              applicationId,
-              scenario: scenarioType,
-            }),
-          }
-        );
+        // Initialize Vapi Web SDK
+        vapiInstance = new Vapi(vapiPublicKey);
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || 'Failed to create call');
-        }
+        const scenario = scenarioPrompts[scenarioType] || scenarioPrompts.easy;
 
-        const data = await response.json();
+        // Event handlers
+        vapiInstance.on('call-start', () => {
+          document.getElementById('call-status')!.textContent = `En appel avec ${scenario.firstName}`;
+          document.getElementById('mic-hint')!.classList.add('hidden');
+          callStartTime = Date.now();
+          timerInterval = window.setInterval(() => {
+            const elapsed = Math.floor((Date.now() - callStartTime!) / 1000);
+            document.getElementById('call-timer')!.textContent = formatTimer(elapsed);
+          }, 1000);
+        });
 
-        document.getElementById('call-status')!.textContent = 'Appel en cours';
+        vapiInstance.on('call-end', () => {
+          if (timerInterval) clearInterval(timerInterval);
+          const duration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0;
+          document.getElementById('final-duration')!.textContent = formatTimer(duration);
+          saveResults(duration);
+          document.getElementById('call-section')!.classList.add('hidden');
+          document.getElementById('completed-section')!.classList.remove('hidden');
+        });
 
-        // Start timer
-        callStartTime = Date.now();
-        timerInterval = window.setInterval(() => {
-          const elapsed = Math.floor((Date.now() - callStartTime!) / 1000);
-          const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-          const secs = String(elapsed % 60).padStart(2, '0');
-          document.getElementById('call-timer')!.textContent = `${mins}:${secs}`;
-        }, 1000);
+        vapiInstance.on('speech-start', () => {
+          document.getElementById('speaking-indicator')!.classList.remove('hidden');
+          document.getElementById('call-avatar')!.classList.add('ring', 'ring-success', 'ring-offset-2');
+        });
 
-        // Embed the Vapi web call in the iframe
-        if (data.webCallUrl) {
-          const frame = document.getElementById('call-frame') as HTMLIFrameElement;
-          frame.src = data.webCallUrl;
-        }
+        vapiInstance.on('speech-end', () => {
+          document.getElementById('speaking-indicator')!.classList.add('hidden');
+          document.getElementById('call-avatar')!.classList.remove('ring', 'ring-success', 'ring-offset-2');
+        });
+
+        vapiInstance.on('error', (error: any) => {
+          console.error('Vapi error:', error);
+          if (timerInterval) clearInterval(timerInterval);
+          showError('Erreur de communication vocale : ' + (error?.message || error?.errorMessage || 'vérifiez votre microphone et réessayez.'));
+        });
+
+        // Start the call with inline assistant config
+        await vapiInstance.start({
+          model: {
+            provider: 'openai',
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'system',
+                content: scenario.systemPrompt,
+              },
+            ],
+          },
+          voice: {
+            provider: '11labs',
+            voiceId: 'EXAVITQu4vr4xnSDxMaL',
+          },
+          firstMessage: scenario.firstMessage,
+          transcriber: {
+            provider: 'deepgram',
+            language: 'fr',
+          },
+          recordingEnabled: true,
+          name: scenarioInfo[scenarioType]?.title || 'Roleplay',
+        } as any);
 
       } catch (err: any) {
-        document.getElementById('call-status')!.textContent = 'Erreur de connexion';
-        alert('Erreur : ' + (err.message || 'Impossible de lancer l\'appel'));
+        console.error('Start call error:', err);
+        showError('Impossible de lancer l\'appel : ' + (err.message || 'vérifiez que votre microphone est autorisé.'));
       }
     });
 
-    // End call and save results
-    document.getElementById('btn-end-call')!.addEventListener('click', async () => {
-      if (timerInterval) clearInterval(timerInterval);
+    // End call manually
+    document.getElementById('btn-end-call')!.addEventListener('click', () => {
+      if (vapiInstance) {
+        vapiInstance.stop();
+      }
+    });
 
-      const callDuration = callStartTime ? Math.floor((Date.now() - callStartTime) / 1000) : 0;
+    // Retry after error
+    document.getElementById('btn-retry')!.addEventListener('click', () => {
+      document.getElementById('error-section')!.classList.add('hidden');
+      document.getElementById('instructions-section')!.classList.remove('hidden');
+    });
 
-      document.getElementById('call-section')!.classList.add('hidden');
-
-      // Save roleplay result to test_results
+    // Save results to Supabase
+    async function saveResults(durationSeconds: number) {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session && applicationId) {
-        await supabase.from('test_results').insert({
-          application_id: applicationId,
-          test_type: 'roleplay',
-          score: null,
-          answers: {
-            scenario: scenarioType,
-            duration_seconds: callDuration,
-          },
-          completed_at: new Date().toISOString(),
-        });
-      }
+      if (!session || !applicationId) return;
 
-      document.getElementById('completed-section')!.classList.remove('hidden');
-    });
+      await supabase.from('test_results').upsert({
+        application_id: applicationId,
+        test_type: `roleplay_${scenarioType}`,
+        score: null,
+        result_data: {
+          scenario: scenarioType,
+          scenario_name: scenarioInfo[scenarioType]?.title || scenarioType,
+          duration_seconds: durationSeconds,
+        },
+        completed_at: new Date().toISOString(),
+      }, { onConflict: 'application_id,test_type' });
+    }
 
     init();
   </script>

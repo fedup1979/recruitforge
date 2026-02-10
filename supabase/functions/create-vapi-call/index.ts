@@ -115,30 +115,38 @@ serve(async (req) => {
 
     const selectedScenario = scenarios[scenario as keyof typeof scenarios];
 
-    // Create Vapi call
-    const vapiResponse = await fetch('https://api.vapi.ai/call/web', {
+    // Create Vapi call (v2 API format)
+    const vapiResponse = await fetch('https://api.vapi.ai/call', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${VAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        type: 'webCall',
         assistant: {
           model: {
             provider: 'openai',
             model: 'gpt-4o',
-            systemMessage: selectedScenario.systemPrompt,
+            messages: [
+              {
+                role: 'system',
+                content: selectedScenario.systemPrompt,
+              },
+            ],
           },
           voice: {
             provider: '11labs',
-            voiceId: 'EXAVITQu4vr4xnSDxMaL', // French female voice
+            voiceId: 'EXAVITQu4vr4xnSDxMaL',
+          },
+          transcriber: {
+            provider: 'deepgram',
+            language: 'fr',
           },
           firstMessage: scenario === 'easy'
             ? 'Allô ?'
             : 'Oui allô ?',
           recordingEnabled: true,
-          transcriptionEnabled: true,
-          language: 'fr-FR',
           name: selectedScenario.name,
         },
       }),
