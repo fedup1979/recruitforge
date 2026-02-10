@@ -308,9 +308,17 @@ IMPORTANT : Tu parles UNIQUEMENT en français. Garde tes réponses courtes (1-3 
         });
 
         vapiInstance.on('error', (error: any) => {
-          console.error('Vapi error:', error);
+          console.error('Vapi error (full):', JSON.stringify(error, null, 2));
           if (timerInterval) clearInterval(timerInterval);
-          showError('Erreur de communication vocale : ' + (error?.message || error?.errorMessage || 'vérifiez votre microphone et réessayez.'));
+
+          // Extract real error message from various Vapi error formats
+          const msg = error?.error?.message
+            || error?.errorMessage
+            || error?.message
+            || (typeof error === 'string' ? error : '')
+            || JSON.stringify(error);
+
+          showError(msg);
         });
 
         // Start the call with inline assistant config
@@ -334,13 +342,12 @@ IMPORTANT : Tu parles UNIQUEMENT en français. Garde tes réponses courtes (1-3 
             provider: 'deepgram',
             language: 'fr',
           },
-          recordingEnabled: true,
-          name: scenarioInfo[scenarioType]?.title || 'Roleplay',
         } as any);
 
       } catch (err: any) {
-        console.error('Start call error:', err);
-        showError('Impossible de lancer l\'appel : ' + (err.message || 'vérifiez que votre microphone est autorisé.'));
+        console.error('Start call error (full):', err);
+        const msg = err?.error?.message || err?.message || JSON.stringify(err);
+        showError(msg);
       }
     });
 
