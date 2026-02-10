@@ -37,6 +37,7 @@ jobs:
           PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkdmR2anlta2FrdW9lcHloYWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MTkxNjAsImV4cCI6MjA4NjE5NTE2MH0.pskKKQAmhfMPcRrBzVV-biTuyNsH3efgn0x0oKB7ULA
           PUBLIC_SENTRY_DSN: https://d6abaee64ba56d84d28c19b880cc5229@o4510854981746688.ingest.de.sentry.io/4510854987513936
           PUBLIC_SITE_URL: https://ambitia.io
+          PUBLIC_VAPI_PUBLIC_KEY: d8e3cb77-0a9f-4d1b-a652-13739951672a
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
